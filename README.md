@@ -1,10 +1,19 @@
-## Official Raspbery pi examples, and 
+## Official Raspberry pi examples, and 
 
 
 # Raspberry Pi Pico SDK Examples
 
-Also examples from [ pimoroni C examples](https://github.com/pimoroni/pimoroni-pico/tree/main/examples)
+sudo minicom -D /dev/ttyACM0 -b 115200  
 
+Also examples from [pimoroni C examples](https://github.com/pimoroni/pimoroni-pico/tree/main/examples)  
+how to setup IDE [Pico + cLion](https://forums.raspberrypi.com/viewtopic.php?t=310446)  
+
+| App                                      | Description                                                                                   |
+|------------------------------------------|-----------------------------------------------------------------------------------------------|
+| [hello_adc](adc/hello_adc)               | Display the voltage from an ADC input.                                                        |
+| [joystick_display](adc/joystick_display) | Display a Joystick X/Y input based on two ADC inputs.                                         |
+| [adc_console](adc/adc_console)           | An interactive shell for playing with the ADC. Includes example of free-running capture mode. |
+| [microphone_adc](adc/microphone_adc)     | Read analog values from a microphone and plot the measured sound amplitude.                   |
 
 ## Getting started
 

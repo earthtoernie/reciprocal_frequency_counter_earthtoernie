@@ -11,4 +11,4 @@ target_link_libraries(display pico_stdlib hardware_spi hardware_pwm hardware_dma
 pico_add_extra_outputs(display)
 
 # add url via pico_set_program_url
-example_auto_set_url(blink)
+example_auto_set_url(display)

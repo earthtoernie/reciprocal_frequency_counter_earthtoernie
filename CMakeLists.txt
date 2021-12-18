@@ -61,6 +61,7 @@ add_compile_options(-Wall
 
 # Hardware-specific examples in subdirectories:
 add_subdirectory(pico_display)
+add_subdirectory(sht40)
 #add_subdirectory(adc)
 #add_subdirectory(clocks)
 #add_subdirectory(cmake)
