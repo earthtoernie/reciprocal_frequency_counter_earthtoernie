@@ -39,7 +39,7 @@ include_directories(
         ${CMAKE_CURRENT_LIST_DIR}
 )
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-error")
 
 add_subdirectory(common)
 add_subdirectory(drivers)
@@ -57,6 +57,7 @@ add_compile_options(-Wall
         -Wno-format          # int != int32_t as far as the compiler is concerned because gcc has int32_t as long int
         -Wno-unused-function # we have some for the docs that aren't called
         -Wno-maybe-uninitialized
+        #-Wno-error=format-truncation
         )
 
 # Hardware-specific examples in subdirectories:

@@ -1,5 +1,5 @@
 add_executable(sht40
-        sht40.c
+        sht40.cpp
         )
 
 # pull in common dependencies

@@ -8,9 +8,9 @@
 using namespace pimoroni;
 
 extern unsigned char image_tif[];
-extern unsigned int image_tif_len;
+extern unsigned int image_tif_len; // 97492;
 
-uint16_t buffer[PicoDisplay::WIDTH * PicoDisplay::HEIGHT];
+uint16_t buffer[PicoDisplay::WIDTH * PicoDisplay::HEIGHT]; // 240*135 = 32400
 PicoDisplay pico_display(buffer);
 /*
 void pixel(int x, int y, uint16_t c) {
