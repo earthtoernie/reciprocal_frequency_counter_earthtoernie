@@ -3,7 +3,14 @@
 #include <vector>
 #include <cstdlib>
 
+#include "hardware/pwm.h"
+#include "hardware/clocks.h"
+#include "hardware/pio.h"
+
 #include "pico_display.hpp"
+
+#include "count.pio.h"
+
 
 using namespace pimoroni;
 
@@ -70,9 +77,70 @@ void sprite(uint8_t *p, int x, int y, bool flip, uint16_t c) {
   }
 }*/
 
-int main() {
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Frequency measured in kHz
+float measure_frequency(uint gpio) {
+    // Only the PWM B pins can be used as inputs.
+    assert(pwm_gpio_to_channel(gpio) == PWM_CHAN_B);
+    uint slice_num = pwm_gpio_to_slice_num(gpio);
+
+    // Count once for every 100 cycles the PWM B input is high
+    pwm_config cfg = pwm_get_default_config();
+    pwm_config_set_clkdiv_mode(&cfg, PWM_DIV_B_RISING);
+    pwm_config_set_clkdiv(&cfg, 1.f); //set by default, increment count for each rising edge
+    pwm_init(slice_num, &cfg, false);  //false means don't start pwm
+    gpio_set_function(gpio, GPIO_FUNC_PWM);
+
+    pwm_set_enabled(slice_num, true);
+    sleep_ms(10);
+    pwm_set_enabled(slice_num, false);
+
+    uint16_t counter = (uint16_t) pwm_get_counter(slice_num);
+    printf("%u\n", counter);
+    float freq =   counter / 10.f;
+    return freq;
+
+}
+
+
+void blk(PicoDisplay display) {
+    display.set_pen(0, 0, 0);
+    display.clear();
+    display.update();
+}
+
+void title(PicoDisplay display, const std::string &t, uint8_t r, uint8_t g, uint8_t b) {
+    blk(display);
+    display.set_pen(r, b, g);
+    display.text(t, Point(20, 10), 200,4);
+    display.update();
+}
+int main(){
+    PIO pio = pio0;
+    stdio_init_all();
+    pico_display.init();
+    pico_display.set_backlight(90);
+//    title(pico_display, "Pimoroni Pico Display Workout", 200, 200, 0);
+    title(pico_display, std::to_string(42), 200, 200, 0);
+
+
+    uint32_t i = 0;
+
+    while(true) {
+
+        float frequency = measure_frequency(3);
+        printf("%.4f\n", frequency);
+        title(pico_display, std::to_string(frequency), 200, 200, 0);
+        i++;
+        sleep_ms(100);
+
+    }
+}
+int main_old() {
   pico_display.init();
   pico_display.set_backlight(100);
+  blk(pico_display);
 
   // uint16_t white = pico_display.create_pen(255, 255, 255);
   // uint16_t black = pico_display.create_pen(0, 0, 0);
