@@ -39,13 +39,14 @@ int main() {
 
     pwm_program_init(pio, sm, offset, PICO_DEFAULT_LED_PIN);
     pio_pwm_set_period(pio, sm, (1u << 16) - 1);
+    pio_pwm_set_level(pio, sm, 180 * 180);
 
     int level = 0;
-    while (true) {
+    while (false) {
         printf("Level = %d\n", level);
         pio_pwm_set_level(pio, sm, level * level);
         level = (level + 1) % 256;
-        sleep_ms(10);
+        sleep_ms(100);
     }
 #endif
 }

@@ -41,15 +41,19 @@ counter:
 output:
     mov isr, x side 1      ; move pulse count value to isr and set pon to high to tell clock counting sm to stop counting
     push                   ; send data to FIFO
-    irq 4            ; set irq and wait for gate PIO to acknowledge
+    irq 5            ; set irq and wait for gate PIO to acknowledge
 
 
 % c-sdk {
 
 // Helper function (for use in C program) to initialize this PIO program
-void gate_program_init(PIO pio, uint sm, uint offset, uint pin) {
+void gate_program_init(PIO pio, uint sm, uint offset) {
    pio_gpio_init(pio, 5); // 5 is input pin
+   pio_gpio_init(pio, 4); // 4 is gate pin
+
    pio_sm_set_consecutive_pindirs(pio, sm, 5, 1, false);
+   pio_sm_set_consecutive_pindirs(pio, sm, 4, 1, true);
+
    pio_sm_config c = gate_program_get_default_config(offset);
    sm_config_set_sideset_pins(&c, 4); // 4 is gate pin
    pio_sm_init(pio, sm, offset, &c);
@@ -74,22 +78,30 @@ void gate_program_init(PIO pio, uint sm, uint offset, uint pin) {
     //pio_sm_init(pio, sm, offset, &c);
 }
 
-void clock_count_program_init(PIO pio, uint sm, uint offset, uint pin) {
-   pio_gpio_init(pio, 4); // 4 is input pin
-   pio_sm_set_consecutive_pindirs(pio, sm, pin, 1, true);
+void clock_count_program_init(PIO pio, uint sm, uint offset) {
+   pio_gpio_init(pio, 4); // 4 is gate pin
+   pio_gpio_init(pio, 3); // 3 is pulse fin pin
    pio_sm_config c = gate_program_get_default_config(offset);
-   sm_config_set_jmp_pin(&c, 3); // 3
-
+   sm_config_set_in_pins(&c, 4); // for WAIT
+   sm_config_set_jmp_pin(&c, 3); // for JMP
+   //pio_sm_set_consecutive_pindirs(pio, sm, pin, 1, true);
    pio_sm_init(pio, sm, offset, &c);
 }
 
 
-void pulse_count_program_init(PIO pio, uint sm, uint offset, uint pin) {
-   pio_gpio_init(pio, 4); // 4 is input pin
-   pio_sm_set_consecutive_pindirs(pio, sm, pin, 1, true);
+void pulse_count_program_init(PIO pio, uint sm, uint offset) {
+   pio_gpio_init(pio, 4); // 4 is gate pin
+   pio_gpio_init(pio, 4); // 3 is pulse fin pin
+
    pio_sm_config c = gate_program_get_default_config(offset);
-   sm_config_set_jmp_pin(&c, 4);
-   sm_config_set_sideset_pins(&c, 3); // 4 is pulse fin
+
+   pio_sm_set_consecutive_pindirs(pio, sm, 3, 1, true);
+
+   sm_config_set_sideset_pins(&c, 3); // 4 is gate pin
+
+   sm_config_set_in_pins(&c, 4); // for WAIT
+   sm_config_set_jmp_pin(&c, 3); // for JMP
+
    pio_sm_init(pio, sm, offset, &c);
 }
 %}

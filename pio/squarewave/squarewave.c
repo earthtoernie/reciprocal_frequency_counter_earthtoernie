@@ -22,6 +22,8 @@
 #include "hardware/pio.h"
 
 // Our assembled program:
+#include "squarewave_fast.pio.h"
+#include "squarewave_wrap.pio.h"
 #include "squarewave.pio.h"
 
 int main() {
@@ -44,7 +46,7 @@ int main() {
     // speed down uniformly to meet some precise frequency target, e.g. for a
     // UART baud rate. This register has 16 integer divisor bits and 8
     // fractional divisor bits.
-    pio->sm[0].clkdiv = (uint32_t) (2.5f * (1 << 16));
+//    pio->sm[0].clkdiv = (uint32_t) (2.5f * (1 << 16));
     /// \end::clock_divider[]
 
     /// \tag::setup_pins[]
@@ -55,8 +57,8 @@ int main() {
     // as opposed to e.g. the processors.
     pio->sm[0].pinctrl =
             (1 << PIO_SM0_PINCTRL_SET_COUNT_LSB) |
-            (0 << PIO_SM0_PINCTRL_SET_BASE_LSB);
-    gpio_set_function(0, GPIO_FUNC_PIO0);
+            (2 << PIO_SM0_PINCTRL_SET_BASE_LSB);
+    gpio_set_function(2, GPIO_FUNC_PIO0);
     /// \end::setup_pins[]
 
     /// \tag::start_sm[]

@@ -13,6 +13,10 @@
 
 #include "count.pio.h"
 
+#define INPUT_PIN 5
+#define GATE_PIN 4
+#define PULSE_FIN_PIN 3
+
 uint32_t max_count = 4294967295;// const((1 << 32) - 1), highest unsigned int
 
 
@@ -20,23 +24,37 @@ PIO sd_pio = pio1;
 bool update_flag = false;
 uint16_t data [2] = { 0, 0 };
 
-void init_sm(uint16_t freq, uint8_t input_pin, uint8_t gate_pin, uint8_t pulse_fin_pin) {
+void init_sm(uint16_t freq) {
+    gpio_init(INPUT_PIN);
+    gpio_init(GATE_PIN);
+    gpio_init(PULSE_FIN_PIN);
+    gpio_set_dir(INPUT_PIN, GPIO_IN);
+    gpio_set_dir(GATE_PIN, GPIO_OUT);
+    gpio_set_dir(PULSE_FIN_PIN, GPIO_OUT);
+    gpio_put(GATE_PIN, 1);
+    gpio_put(PULSE_FIN_PIN, 1);
+
+
     // starts state machines.
     uint offset_gate_program = pio_add_program(sd_pio, &gate_program);
     uint offset_clock_count_program = pio_add_program(sd_pio, &clock_count_program);
+    uint offset_pulse_count_program = pio_add_program(sd_pio, &pulse_count_program);
 
-
-    gate_program_init(sd_pio, 0, offset_gate_program, 0);
+    gate_program_init(sd_pio, 0, offset_gate_program);
     pio_sm_put(sd_pio, 0, freq);
     pio_sm_exec(sd_pio, 0, pio_encode_pull(false, false));
 
-    clock_count_program_init(sd_pio, 1, offset_clock_count_program, 0);
+    clock_count_program_init(sd_pio, 1, offset_clock_count_program);
     pio_sm_put(sd_pio, 1, max_count);
     pio_sm_exec(sd_pio, 1, pio_encode_pull(false, false));
 
-    pulse_count_program_init(sd_pio, 2, offset_clock_count_program, 0);
+    pulse_count_program_init(sd_pio, 2, offset_pulse_count_program);
     pio_sm_put(sd_pio, 2, max_count-1);
     pio_sm_exec(sd_pio, 2, pio_encode_pull(false, false));
+
+    pio_sm_set_enabled(sd_pio, 0, true);
+    pio_sm_set_enabled(sd_pio, 1, false);
+    pio_sm_set_enabled(sd_pio, 2, false);
 
 }
 
@@ -64,7 +82,7 @@ int main(){
 
     printf("hello world\n");
 
-    init_sm(12500000, 5, 4, 3);
+    init_sm(12500000);
     irq_set_exclusive_handler(PIO0_IRQ_0, isr);
     irq_set_enabled(PIO0_IRQ_0, true);
     pio_set_irq0_source_enabled(sd_pio, pis_interrupt0, true);
