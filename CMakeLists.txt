@@ -62,7 +62,7 @@ add_compile_options(-Wall
 
 # Hardware-specific examples in subdirectories:
 add_subdirectory(pico_display)
-add_subdirectory(sht40)
+#add_subdirectory(sht40) custom
 #add_subdirectory(adc)
 #add_subdirectory(clocks)
 #add_subdirectory(cmake)
@@ -70,7 +70,7 @@ add_subdirectory(sht40)
 #add_subdirectory(dma)
 #add_subdirectory(flash)
 #add_subdirectory(gpio)
-#add_subdirectory(i2c)
+add_subdirectory(i2c)
 #add_subdirectory(interp)
 #add_subdirectory(multicore)
 #add_subdirectory(picoboard)

@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+# use KolourPaint
+
+
 # Converts a grayscale image into a format able to be
 # displayed by the SSD1306 driver in horizontal addressing mode
 

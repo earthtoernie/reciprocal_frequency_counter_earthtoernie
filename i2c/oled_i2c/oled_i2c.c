@@ -61,6 +61,11 @@
 #define OLED_WRITE_MODE _u(0xFE)
 #define OLED_READ_MODE _u(0xFF)
 
+
+#define PICO_DEFAULT_I2C 1
+#define PICO_DEFAULT_I2C_SDA_PIN 26
+#define PICO_DEFAULT_I2C_SCL_PIN 27
+
 struct render_area {
     uint8_t start_col;
     uint8_t end_col;
@@ -250,11 +255,11 @@ int main() {
     gpio_pull_up(PICO_DEFAULT_I2C_SCL_PIN);
 
     // run through the complete initialization process
+    sleep_ms(500);
     oled_init();
 
     // initialize render area for entire frame (128 pixels by 4 pages)
-    struct render_area frame_area = {start_col: 0, end_col : OLED_WIDTH - 1, start_page : 0, end_page : OLED_NUM_PAGES -
-                                                                                                        1};
+    struct render_area frame_area = {start_col: 0, end_col : OLED_WIDTH - 1, start_page : 0, end_page : OLED_NUM_PAGES - 1};
     calc_render_area_buflen(&frame_area);
 
     // zero the entire display
@@ -291,7 +296,7 @@ int main() {
     oled_send_cmd(0xFF); // dummy byte
 
     // let's goooo!
-    oled_send_cmd(OLED_SET_SCROLL | 0x01);
+    //oled_send_cmd(OLED_SET_SCROLL | 0x01);
 
 #endif
     return 0;

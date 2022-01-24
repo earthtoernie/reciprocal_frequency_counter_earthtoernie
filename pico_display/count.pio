@@ -5,7 +5,7 @@
     wait 0 pin 0           ; wait for input to go low
     wait 1 pin 0           ; wait for input to go high, effectively giving us rising edge detection
 loopstart:
-    jmp x--, loopstart side 0 ; keep gate low for time programmed by setting x reg
+    jmp x--, loopstart side 1 ; keep gate low for time programmed by setting x reg
     wait 0 pin 0           ; wait for input to go low
     wait 1 pin 0 side 1    ; set gate to high on rising edge
     irq 0            ; set interrupt 0 flag and wait for system handler to service interrupt
