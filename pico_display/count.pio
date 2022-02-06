@@ -5,12 +5,12 @@
     wait 0 pin 0           ; wait for input to go low
     wait 1 pin 0           ; wait for input to go high, effectively giving us rising edge detection
 loopstart:
-    jmp x--, loopstart side 1 ; keep gate low for time programmed by setting x reg
+    jmp x--, loopstart side 0 ; keep gate low for time programmed by setting x reg
     wait 0 pin 0           ; wait for input to go low
     wait 1 pin 0 side 1    ; set gate to high on rising edge
-    irq 0            ; set interrupt 0 flag and wait for system handler to service interrupt
-    wait 1 irq 4           ; wait for irq from clock counting state machine
-    wait 1 irq 5           ; wait for irq from clock counting state machine
+    irq wait 0 ;rel           ; set interrupt 0 flag and wait for system handler to service interrupt
+;    wait 1 irq 4           ; wait for irq from clock counting state machine
+;    wait 1 irq 5           ; wait for irq from clock counting state machine
 
 ;;;; PIO for counting clock pulses during gate low.
 .program clock_count
@@ -48,14 +48,21 @@ output:
 
 // Helper function (for use in C program) to initialize this PIO program
 void gate_program_init(PIO pio, uint sm, uint offset) {
+   pio_sm_config c = gate_program_get_default_config(offset);
+
    pio_gpio_init(pio, 5); // 5 is input pin
    pio_gpio_init(pio, 4); // 4 is gate pin
 
-   pio_sm_set_consecutive_pindirs(pio, sm, 5, 1, false);
+   sm_config_set_in_pins(&c, 5); // this is needed to set as input!!
+
+   //pio_sm_set_consecutive_pindirs(pio, sm, 5, 1, false); // dont think this does anything
    pio_sm_set_consecutive_pindirs(pio, sm, 4, 1, true);
 
-   pio_sm_config c = gate_program_get_default_config(offset);
    sm_config_set_sideset_pins(&c, 4); // 4 is gate pin
+
+    pio_set_irq0_source_enabled(pio, pis_interrupt0, true);
+    //pio_interrupt_clear(pio, sm);
+
    pio_sm_init(pio, sm, offset, &c);
 
     // Sets up state machine and wrap target. This function is automatically
