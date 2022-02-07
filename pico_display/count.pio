@@ -1,7 +1,7 @@
 ;;;; PIO to generate gate signal.
 .program gate
 .side_set 1 opt
-    mov x, osr             ; load gate time (in clock pulses) from osr
+    mov x, osr side 1            ; load gate time (in clock pulses) from osr, HAVE TO SIDESET TO GET INITIAL CONDITION
     wait 0 pin 0           ; wait for input to go low
     wait 1 pin 0           ; wait for input to go high, effectively giving us rising edge detection
 loopstart:
@@ -9,8 +9,8 @@ loopstart:
     wait 0 pin 0           ; wait for input to go low
     wait 1 pin 0 side 1    ; set gate to high on rising edge
     irq wait 0 ;rel           ; set interrupt 0 flag and wait for system handler to service interrupt
-;    wait 1 irq 4           ; wait for irq from clock counting state machine
-;    wait 1 irq 5           ; wait for irq from clock counting state machine
+    wait 1 irq 4           ; wait for irq from clock counting state machine
+    ;wait 1 irq 5           ; wait for irq from pulse counting state machine
 
 ;;;; PIO for counting clock pulses during gate low.
 .program clock_count
@@ -30,7 +30,7 @@ output:
 ;;;; PIO for counting incoming pulses during gate low.
 .program pulse_count
 .side_set 1 opt
-    mov x, osr             ; load x scratch with max value (2^31-1)
+    mov x, osr side 1            ; load x scratch with max value (2^31-1)
     wait 1 pin 0         ;
     wait 0 pin 0 side 0  ; detect falling edge of gate
 counter:

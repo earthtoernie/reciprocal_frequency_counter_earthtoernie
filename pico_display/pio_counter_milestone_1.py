@@ -14,7 +14,7 @@ def gate():
     wait(1, pin, 0) .side(1)                               # set gate to high on rising edge
     irq(block, 0)                                          # set interrupt 0 flag and wait for system handler to service interrupt
     wait(1, irq, 4)                                        # wait for irq from clock counting state machine
-    wait(1, irq, 5)                                        # wait for irq from pulse counting state machine
+    #wait(1, irq, 5)                                        # wait for irq from pulse counting state machine
 
 @asm_pio()
 def clock_count():
@@ -61,15 +61,15 @@ def init_sm(freq, input_pin, gate_pin, pulse_fin_pin):
     sm1.put(max_count)
     sm1.exec("pull()")
 
-    sm2 = rp2.StateMachine(2, pulse_count, freq=freq, in_base=gate_pin, sideset_base = pulse_fin_pin, jmp_pin=gate_pin)
-    sm2.put(max_count-1)
-    sm2.exec("pull()")
+    #sm2 = rp2.StateMachine(2, pulse_count, freq=freq, in_base=gate_pin, sideset_base = pulse_fin_pin, jmp_pin=gate_pin)
+    #sm2.put(max_count-1)
+    #sm2.exec("pull()")
 
     sm1.active(1)
-    sm2.active(1)
+    #sm2.active(1)
     sm0.active(1)
 
-    return sm0, sm1, sm2
+    return sm0, sm1, "foo"
 
 if __name__ == "__main__":
     from machine import Pin
@@ -84,7 +84,7 @@ if __name__ == "__main__":
             sm0.put(125_000_000)
             sm0.exec("pull()")
             data[0] = sm1.get() # clock count
-            data[1] = sm2.get() # pulse count
+            #data[1] = sm2.get() # pulse count
             update_flag = True
 
     sm0, sm1, sm2 = init_sm(125_000_000, Pin(5, Pin.IN, Pin.PULL_UP), Pin(4, Pin.OUT), Pin(3, Pin.OUT))
@@ -103,3 +103,4 @@ if __name__ == "__main__":
             print("Frequency:   {}".format(freq))
             i += 1
             update_flag = False
+

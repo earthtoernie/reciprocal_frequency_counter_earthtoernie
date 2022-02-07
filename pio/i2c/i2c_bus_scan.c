@@ -13,7 +13,7 @@ bool reserved_addr(uint8_t addr) {
 int main() {
     stdio_init_all();
 
-    PIO pio = pio0;
+    PIO pio = pio;
     uint sm = 0;
     uint offset = pio_add_program(pio, &i2c_program);
     i2c_program_init(pio, sm, offset, PIN_SDA, PIN_SCL);
