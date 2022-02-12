@@ -6,7 +6,7 @@ add_executable(
 )
 
 # Pull in pico libraries that we need
-target_link_libraries(display_sensors pico_stdlib hardware_spi hardware_clocks hardware_pwm hardware_pio hardware_dma pico_display)
+target_link_libraries(display_sensors pico_stdlib hardware_spi hardware_clocks hardware_pwm hardware_pio hardware_dma pico_display hardware_i2c)
 
 # create map/bin/hex file etc.
 pico_add_extra_outputs(display_sensors)

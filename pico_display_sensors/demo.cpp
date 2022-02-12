@@ -1,191 +1,212 @@
-#include <string.h>
-#include <math.h>
-#include <vector>
-#include <cstdlib>
+
+#include <sstream>
+#include <iomanip>
+#include "hardware/i2c.h"
+
 
 #include "pico_display.hpp"
 
+#define PICO_DEFAULT_I2C 1
+#define PICO_DEFAULT_I2C_SDA_PIN 26
+#define PICO_DEFAULT_I2C_SCL_PIN 27
+
 using namespace pimoroni;
 
-extern unsigned char image_tif[];
-extern unsigned int image_tif_len;
+static const uint8_t SHT_40_ADDRESS = 0x44;
 
-uint8_t FontData[96][5]={
-        {0b0000000,0b0000000,0b0000000,0b0000000,0b0000000}, // space
-        {0b0000000,0b0000000,0b1111101,0b0000000,0b0000000}, // !
-        {0b0000000,0b1110000,0b0000000,0b1110000,0b0000000}, // "
-        {0b0010100,0b1111111,0b0010100,0b1111111,0b0010100}, // #
-        {0b0010010,0b0101010,0b1111111,0b0101010,0b0100100}, // $
-        {0b1100010,0b1100100,0b0001000,0b0010011,0b0100011}, // %
-        {0b0110110,0b1001001,0b1010101,0b0100010,0b0000101}, // &
-        {0b0000000,0b0000000,0b1100000,0b0000000,0b0000000}, // ’
-        {0b0000000,0b0011100,0b0100010,0b1000001,0b0000000}, // (
-        {0b0000000,0b1000001,0b0100010,0b0011100,0b0000000}, // )
-        {0b0010100,0b0001000,0b0111110,0b0001000,0b0010100}, // *
-        {0b0001000,0b0001000,0b0111110,0b0001000,0b0001000}, // +
-        {0b0000000,0b0000101,0b0000110,0b0000000,0b0000000}, // ,
-        {0b0001000,0b0001000,0b0001000,0b0001000,0b0001000}, // -
-        {0b0000000,0b0000011,0b0000011,0b0000000,0b0000000}, // .
-        {0b0000010,0b0000100,0b0001000,0b0010000,0b0100000}, // /
-        {0b0111110,0b1000101,0b1001001,0b1010001,0b0111110}, // 0
-        {0b0000000,0b0100001,0b1111111,0b0000001,0b0000000}, // 1
-        {0b0100011,0b1000101,0b1001001,0b1001001,0b0110001}, // 2
-        {0b0100010,0b1000001,0b1001001,0b1001001,0b0110110}, // 3
-        {0b0001100,0b0010100,0b0100100,0b1111111,0b0000100}, // 4
-        {0b1110010,0b1010001,0b1010001,0b1010001,0b1001110}, // 5
-        {0b0011110,0b0101001,0b1001001,0b1001001,0b0000110}, // 6
-        {0b1000000,0b1000111,0b1001000,0b1010000,0b1100000}, // 7
-        {0b0110110,0b1001001,0b1001001,0b1001001,0b0110110}, // 8
-        {0b0110000,0b1001001,0b1001001,0b1001010,0b0111100}, // 9
-        {0b0000000,0b0110110,0b0110110,0b0000000,0b0000000}, // :
-        {0b0000000,0b0110101,0b0110110,0b0000000,0b0000000}, // ;
-        {0b0001000,0b0010100,0b0100010,0b1000001,0b0000000}, // <
-        {0b0010100,0b0010100,0b0010100,0b0010100,0b0010100}, // =
-        {0b0000000,0b1000001,0b0100010,0b0010100,0b0001000}, // >
-        {0b0100000,0b1000000,0b1000101,0b1001000,0b0110000}, // ?
-        {0b0100110,0b1001001,0b1001111,0b1000001,0b0111110}, // @
-        {0b0011111,0b0100100,0b1000100,0b0100100,0b0011111}, // A
-        {0b1000001,0b1111111,0b1001001,0b1001001,0b0110110}, // B
-        {0b0111110,0b1000001,0b1000001,0b1000001,0b0100010}, // C
-        {0b1000001,0b1111111,0b1000001,0b1000001,0b0111110}, // D
-        {0b1111111,0b1001001,0b1001001,0b1001001,0b1000001}, // E
-        {0b1111111,0b1001000,0b1001000,0b1001000,0b1000000}, // F
-        {0b0111110,0b1000001,0b1000001,0b1001001,0b0101111}, // G
-        {0b1111111,0b0001000,0b0001000,0b0001000,0b1111111}, // H
-        {0b0000000,0b1000001,0b1111111,0b1000001,0b0000000}, // I
-        {0b0000010,0b0000001,0b1000001,0b1111110,0b1000000}, // J
-        {0b1111111,0b0001000,0b0010100,0b0100010,0b1000001}, // K
-        {0b1111111,0b0000001,0b0000001,0b0000001,0b0000001}, // L
-        {0b1111111,0b0100000,0b0011000,0b0100000,0b1111111}, // M
-        {0b1111111,0b0010000,0b0001000,0b0000100,0b1111111}, // N
-        {0b0111110,0b1000001,0b1000001,0b1000001,0b0111110}, // O
-        {0b1111111,0b1001000,0b1001000,0b1001000,0b0110000}, // P
-        {0b0111110,0b1000001,0b1000101,0b1000010,0b0111101}, // Q
-        {0b1111111,0b1001000,0b1001100,0b1001010,0b0110001}, // R
-        {0b0110010,0b1001001,0b1001001,0b1001001,0b0100110}, // S
-        {0b1000000,0b1000000,0b1111111,0b1000000,0b1000000}, // T
-        {0b1111110,0b0000001,0b0000001,0b0000001,0b1111110}, // U
-        {0b1111100,0b0000010,0b0000001,0b0000010,0b1111100}, // V
-        {0b1111110,0b0000001,0b0001110,0b0000001,0b1111110}, // W
-        {0b1100011,0b0010100,0b0001000,0b0010100,0b1100011}, // X
-        {0b1110000,0b0001000,0b0000111,0b0001000,0b1110000}, // Y
-        {0b1000011,0b1000101,0b1001001,0b1010001,0b1100001}, // Z
-        {0b0000000,0b1111111,0b1000001,0b1000001,0b0000000}, // [
-        {0b0100000,0b0010000,0b0001000,0b0000100,0b0000010}, // backslash
-        {0b0000000,0b1000001,0b1000001,0b1111111,0b0000000}, // ]
-        {0b0010000,0b0100000,0b1000000,0b0100000,0b0010000}, // ^
-        {0b0000001,0b0000001,0b0000001,0b0000001,0b0000001}, // _
-        {0b0000000,0b1000000,0b0100000,0b0010000,0b0000000}, // `
-        {0b0000010,0b0010101,0b0010101,0b0010101,0b0001111}, // a
-        {0b1111111,0b0001001,0b0010001,0b0010001,0b0001110}, // b
-        {0b0001110,0b0010001,0b0010001,0b0010001,0b0000010}, // c
-        {0b0001110,0b0010001,0b0010001,0b0001001,0b1111111}, // d
-        {0b0001110,0b0010101,0b0010101,0b0010101,0b0001100}, // e
-        {0b0001000,0b0111111,0b1001000,0b1000000,0b0100000}, // f
-        {0b0001000,0b0010101,0b0010101,0b0010101,0b0011110}, // g
-        {0b1111111,0b0001000,0b0010000,0b0010000,0b0001111}, // h
-        {0b0000000,0b0001001,0b1011111,0b0000001,0b0000000}, // i
-        {0b0000010,0b0000001,0b0010001,0b1011110,0b0000000}, // j
-        {0b1111111,0b0000100,0b0001010,0b0010001,0b0000000}, // k
-        {0b0000000,0b1000001,0b1111111,0b0000001,0b0000000}, // l
-        {0b0011111,0b0010000,0b0001111,0b0010000,0b0001111}, // m
-        {0b0011111,0b0001000,0b0010000,0b0010000,0b0001111}, // n
-        {0b0001110,0b0010001,0b0010001,0b0010001,0b0001110}, // o
-        {0b0011111,0b0010100,0b0010100,0b0010100,0b0001000}, // p
-        {0b0001000,0b0010100,0b0010100,0b0001100,0b0011111}, // q
-        {0b0011111,0b0001000,0b0010000,0b0010000,0b0001000}, // r
-        {0b0001001,0b0010101,0b0010101,0b0010101,0b0000010}, // s
-        {0b0010000,0b1111110,0b0010001,0b0000001,0b0000010}, // t
-        {0b0011110,0b0000001,0b0000001,0b0000010,0b0011111}, // u
-        {0b0011100,0b0000010,0b0000001,0b0000010,0b0011100}, // v
-        {0b0011110,0b0000001,0b0000110,0b0000001,0b0011110}, // w
-        {0b0010001,0b0001010,0b0000100,0b0001010,0b0010001}, // x
-        {0b0011000,0b0000101,0b0000101,0b0000101,0b0011110}, // y
-        {0b0010001,0b0010011,0b0010101,0b0011001,0b0010001}, // z
-        {0b0000000,0b0001000,0b0110110,0b1000001,0b0000000}, // {
-        {0b0000000,0b0000000,0b1111111,0b0000000,0b0000000}, // |
-        {0b0000000,0b1000001,0b0110110,0b0001000,0b0000000}, // }
-        {0b0000100,0b0001000,0b0001000,0b0000100,0b0001000}, // ~
-        {0b0000110,0b0001001,0b1010001,0b0000001,0b0000010} // Que?
-};
+// minicom -D /dev/ttyACM0 -b 115200
 
 uint16_t buffer[PicoDisplay::WIDTH * PicoDisplay::HEIGHT];
 PicoDisplay pico_display(buffer);
 
-void charAt(uint8_t c, int x, int y){
-    if(c < 0x20 || c > 0x9e) c = 0x9f;
-    c = c - 0x20; // font starts at
-    for(int cx=0; cx<5; cx++) {
-        uint8_t col;
-        col = FontData[c][cx];
-        for(int cy=0; cy<7; cy++){
-            if(col & 0x40) {
-                pico_display.set_pen(255,255,0);
-                pico_display.pixel(Point(x+cx, y+cy));
-            }
-            col <<=1;
-        }
+int reg_write(i2c_inst_t *i2c,
+              const uint addr,
+              const uint8_t reg,
+              uint8_t *buf,
+              const uint8_t nbytes);
+
+int reg_read(i2c_inst_t *i2c,
+             const uint addr,
+             const uint8_t reg,
+             uint8_t *buf,
+             const uint8_t nbytes);
+
+// Write 1 byte to the specified register
+int reg_write(i2c_inst_t *i2c,
+              const uint addr,
+              const uint8_t reg,
+              uint8_t *buf,
+              const uint8_t nbytes) {
+    int num_bytes_read = 0;
+    uint8_t msg[nbytes + 1];
+
+    // Check to make sure caller is sending 1 or more bytes
+    if (nbytes < 1) {
+        return 0;
     }
+
+    // Append register address to front of data packet
+    msg[0] = reg;
+    for (int i = 0; i < nbytes; i++) {
+        msg[i + 1] = buf[i];
+    }
+
+    // Write data to register(s) over I2C
+    i2c_write_blocking(i2c, addr, msg, (nbytes + 1), false);
+
+    return num_bytes_read;
 }
 
-void stringAt(const std::string &p, int x, int y) {
-    for(int i = 0; char c=p[i]; i++) {
-        charAt(c,x,y);
-        x += 6;
-        if(x>= 240) {
-            x = 0;
-            y+= 8;
-            if( y>135) return;
-        }
+//void displayA(){
+//    // set the colour of the pen
+//    // parameters are red, green, blue all between 0 and 255
+//    pico_display.set_pen(30, 40, 50);
+//
+//    // fill the screen with the current pen colour
+//    pico_display.clear();
+//
+//    // draw a box to put some text in
+//    pico_display.set_pen(10, 20, 30);
+//    Rect text_rect(10, 10, 150, 150);
+//    pico_display.rectangle(text_rect);
+//
+//    // write some text inside the box with 10 pixels of margin
+//    // automatically word wrapping
+//    text_rect.deflate(10);
+//    pico_display.set_pen(110, 120, 130);
+//    pico_display.text("This is a message", Point(text_rect.x, text_rect.y), text_rect.w);
+//
+//    // now we've done our drawing let's update the screen
+//    pico_display.update();
+//}
+
+std::string leftExtend(std::string s, int totalLen) {
+    int startLen = s.size();
+    int lenDiff = totalLen - startLen;
+    std::string toReturn = "";
+
+    while(lenDiff>0){
+        toReturn += "_";
+        lenDiff--;
     }
+    return toReturn + s;
 }
 
+void display(float tempC, float humidityPct, float mA) {
+    float tempF = (tempC * 1.8) + 32;
+    float maPct = (mA - 4.0) / 16.0;
+    std::stringstream tempFStream;
+    std::stringstream humidityPctFstream;
+    std::stringstream mAFStream;
+    std::stringstream mAStream;
+    std::stringstream mAPctStream;
+
+    tempFStream << std::fixed << std::setprecision(2) << tempF << "F";
+    humidityPctFstream << std::fixed << std::setprecision(2) << humidityPct << "%";
+    mAStream << std::fixed << std::setprecision(8) << mA << "%";
+    mAPctStream << std::fixed << std::setprecision(8) << maPct << "%";
+
+    pico_display.set_pen(255, 40, 50);
+    pico_display.text(leftExtend(humidityPctFstream.str(), 7), Point(0, 0), 100, 5);
+    pico_display.set_pen(0, 0, 255);
+    pico_display.text(leftExtend(tempFStream.str(), 7), Point(0, 30), 100, 5);
+    pico_display.set_pen(0, 255, 255);
+
+    pico_display.text("_4mA", Point(0, 60), 100, 5);
+    pico_display.text("__9%", Point(120, 60), 200, 5);
 
 
+//    pico_display.set_pen(255, 40, 50);
+//    pico_display.text("_23.45%", Point(0, 0), 100, 5);
+//    pico_display.set_pen(0, 0, 255);
+//    pico_display.text("_00.00F", Point(0, 30), 100, 5);
+//    pico_display.set_pen(0, 255, 255);
+//
+//    pico_display.text("_4mA", Point(0, 60), 100, 5);
+//    pico_display.text("__9%", Point(120, 60), 200, 5);
+
+
+    pico_display.update();
+}
+
+void readSht(float tempHumidity[]){
+    uint8_t msg1[2];
+    msg1[0] = 0x94;
+    i2c_write_blocking(i2c_default, SHT_40_ADDRESS, msg1, 1, false);
+    sleep_ms(10);
+
+    uint8_t msg2[2];
+    msg2[0] = 0xFD;
+    i2c_write_blocking(i2c_default, SHT_40_ADDRESS, msg2, 1, false);
+    sleep_ms(10);
+
+    uint8_t rx_bytes[6];
+    i2c_read_blocking(i2c_default, SHT_40_ADDRESS, rx_bytes, 6, false);
+
+    uint16_t t_ticks = rx_bytes[0] * 256 + rx_bytes[1];
+    uint16_t rh_ticks = rx_bytes[3] * 256 + rx_bytes[4];
+    uint8_t checksum_t = rx_bytes[2];
+    uint8_t checksum_rh = rx_bytes[5];
+    //uint16_t t_degC_uint = -45 + 175 * t_ticks/65535;
+    float t_degC_float = -45 + 175 * (float)t_ticks/65535;
+    float rh_pRH = -6 + 125 * (float)rh_ticks/65535;
+
+
+    //printf("temp C: %u\n", (unsigned int)t_degC_uint);
+    printf("temp C: %.2f\n", t_degC_float);
+    printf("temp F: %.2f\n", (t_degC_float * (9.0/5.0))+32);
+    printf("    rh: %.2f\n", rh_pRH);
+    tempHumidity[0] = t_degC_float;
+    tempHumidity[1] = rh_pRH;
+
+}
 
 
 int main() {
+    stdio_init_all();
+    i2c_init(i2c_default, 400 * 1000);
+    gpio_set_function(PICO_DEFAULT_I2C_SDA_PIN, GPIO_FUNC_I2C);
+    gpio_set_function(PICO_DEFAULT_I2C_SCL_PIN, GPIO_FUNC_I2C);
+    gpio_pull_up(PICO_DEFAULT_I2C_SDA_PIN);
+    gpio_pull_up(PICO_DEFAULT_I2C_SCL_PIN);
+    uint8_t msg1[2];
+    msg1[0] = 0x94;
+    i2c_write_blocking(i2c_default, SHT_40_ADDRESS, msg1, 1, false);
+    sleep_ms(10);
+    uint8_t msg2[2];
+    msg2[0] = 0xFD;
+    i2c_write_blocking(i2c_default, SHT_40_ADDRESS, msg2, 1, false);
+    sleep_ms(10);
+    uint8_t msg3[6];
+    i2c_read_blocking(i2c_default, SHT_40_ADDRESS, msg3, 6, false);
+    // Make the I2C pins available to picotool
+//    bi_decl(bi_2pins_with_func(PICO_DEFAULT_I2C_SDA_PIN, PICO_DEFAULT_I2C_SCL_PIN, GPIO_FUNC_I2C));
+
     pico_display.init();
+    pico_display.update();
+
+    // set the backlight to a value between 0 and 255
+    // the backlight is driven via PWM and is gamma corrected by our
+    // library to give a gorgeous linear brightness range.
     pico_display.set_backlight(100);
-    pico_display.set_led(0,0,0);
-    const uint8_t LED_PIN = 25;
-    gpio_init(LED_PIN);
-    gpio_set_dir(LED_PIN, GPIO_OUT);
-    int textX = 0, textX2 = 0;
-    int textY = 0, textY2 = 0;
-    int textdx = 1;
-    int textdy = 1;
-    uint32_t  i = 0;
+    pico_display.clear();
 
     while(true) {
-
-        std::string s("abcdefghijklmnopqrstuvwxyz");
-        std::string s2("[The quick brown fox jumps over the lazy dog!]");
-        stringAt(s,textX,textY);
-        stringAt(s2,textX,textY+8);
-        std::string s3("Hello there!!");
-        int textW = s3.length()*6;
-        int textH = 8;
-        stringAt(s3,textX2,textY2);
-        textX2 += textdx;
-        textY2 += textdy;
-        if(textX2 < 0) textdx *= -1;
-        if(textX2+textW >= pico_display.bounds.w) textdx *= -1;
-        if(textY2 < 0) textdy *= -1;
-        if(textY2+textH >= pico_display.bounds.h) textdy *= -1;
-// update screen
-
-        pico_display.update();
-
-        i++;
-        if(i>1000){
-            break;
+        pico_display.clear();
+        sleep_ms(1000);
+        float tempHumidity[2];
+        readSht(tempHumidity);
+        display(tempHumidity[0], tempHumidity[1], 2);
+        // detect if the A button is pressed (could be A, B, X, or Y)
+        if(pico_display.is_pressed(pico_display.Y)) {
+            // make the led glow green
+            // parameters are red, green, blue all between 0 and 255
+            // these are also gamma corrected
+            //pico_display.set_led(0, 255, 0);
+            display(2, 3, 2);
         }
+
+
     }
-    return 0;
-
-
-
-
 }
 

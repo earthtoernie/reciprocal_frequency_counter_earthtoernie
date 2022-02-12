@@ -86,7 +86,7 @@ void isr()
 
 //void count_handler(sm)
 int main(){
-    // minicom -D /dev/ttyACM0 -b 115200
+
     // https://forums.raspberrypi.com/viewtopic.php?t=316677
     stdio_init_all();
 
