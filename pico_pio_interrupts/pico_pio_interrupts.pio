@@ -1,10 +1,21 @@
 ;;;; PIO to generate gate signal.
 .program blinker
     set pindirs, 1 ; not sure we need this
+    wait 1 irq 4
 loopstart:
     set pins, 1 [10]
     set pins, 0 [10]
     jmp loopstart
+
+.program blocker
+.side_set 1 opt
+    set pindirs, 0 side 1
+    wait 0 pin 0 side 1
+    wait 1 pin 0
+    wait 0 pin 0
+    wait 1 pin 0
+    irq set 4
+
 
 
 
@@ -19,14 +30,28 @@ void blinker_program_init(PIO pio, uint sm, uint offset, uint pin) {
    pio_sm_config c = blinker_program_get_default_config(offset);
    sm_config_set_clkdiv (&c, 1000.0);
    sm_config_set_set_pins(&c, pin, 1); // this is needed to set as output!! NOT sm_config_set_out_pins
-
-
-
    //pio_sm_set_consecutive_pindirs(pio, sm, 5, 1, false); // dont think this does anything
-
 
    pio_sm_init(pio, sm, offset, &c);
 
+}
+
+void blocker_program_init(PIO pio, uint sm, uint offset, uint pin, uint sidePin) {
+
+   pio_gpio_init(pio, pin); // Set this pin's GPIO function (connect PIO to the pad)
+   pio_gpio_init(pio, sidePin); // Set this pin's GPIO function (connect PIO to the pad)
+
+   pio_sm_set_consecutive_pindirs(pio, sm, pin, 1, false);
+   pio_sm_set_consecutive_pindirs(pio, sm, sidePin, 1, true);
+
+
+   pio_sm_config c = blocker_program_get_default_config(offset);
+   sm_config_set_sideset_pins(&c, sidePin);
+
+   sm_config_set_set_pins(&c, pin, 0); // this is needed to set as output!! NOT sm_config_set_out_pins
+   //pio_sm_set_consecutive_pindirs(pio, sm, 5, 1, false); // dont think this does anything
+
+   pio_sm_init(pio, sm, offset, &c);
 }
 
 %}
