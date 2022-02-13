@@ -1,22 +1,20 @@
-
 add_executable(
-        display_sensors
+        pico_pio_interrupts
         demo.cpp
-        image_data.cpp
 )
 
 # Pull in pico libraries that we need
-target_link_libraries(display_sensors pico_stdlib hardware_spi hardware_clocks hardware_pwm hardware_pio hardware_dma pico_display hardware_i2c)
+target_link_libraries(pico_pio_interrupts pico_stdlib)
 
 # create map/bin/hex file etc.
-pico_add_extra_outputs(display_sensors)
+pico_add_extra_outputs(pico_pio_interrupts)
 
 # enable usb output, disable uart output
-pico_enable_stdio_usb(display_sensors 0)
-pico_enable_stdio_uart(display_sensors 1)
+pico_enable_stdio_usb(pico_pio_interrupts 0)
+pico_enable_stdio_uart(pico_pio_interrupts 1)
 
 # Create C header file with the name <pio program>.pio.h
-#pico_generate_pio_header(display ${CMAKE_CURRENT_LIST_DIR}/pico_pio_interrupts.pio)
+pico_generate_pio_header(pico_pio_interrupts ${CMAKE_CURRENT_LIST_DIR}/pico_pio_interrupts.pio)
 
 #add_custom_command(OUTPUT ${CMAKE_CURRENT_LIST_DIR}/generated/pico_pio_interrupts.pio.h
 #        DEPENDS ${CMAKE_CURRENT_LIST_DIR}/pico_pio_interrupts.pio
@@ -24,4 +22,4 @@ pico_enable_stdio_uart(display_sensors 1)
 #        )
 
 # add url via pico_set_program_url
-example_auto_set_url(display_sensors)
+example_auto_set_url(pico_pio_interrupts)

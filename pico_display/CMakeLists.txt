@@ -17,9 +17,9 @@ pico_enable_stdio_uart(display 1)
 # Create C header file with the name <pio program>.pio.h
 pico_generate_pio_header(display ${CMAKE_CURRENT_LIST_DIR}/count.pio)
 
-#add_custom_command(OUTPUT ${CMAKE_CURRENT_LIST_DIR}/generated/count.pio.h
-#        DEPENDS ${CMAKE_CURRENT_LIST_DIR}/count.pio
-#        COMMAND Pioasm ${CMAKE_CURRENT_LIST_DIR}/count.pio ${CMAKE_CURRENT_LIST_DIR}/generated/count.pio.h
+#add_custom_command(OUTPUT ${CMAKE_CURRENT_LIST_DIR}/generated/pico_pio_interrupts.pio.h
+#        DEPENDS ${CMAKE_CURRENT_LIST_DIR}/pico_pio_interrupts.pio
+#        COMMAND Pioasm ${CMAKE_CURRENT_LIST_DIR}/pico_pio_interrupts.pio ${CMAKE_CURRENT_LIST_DIR}/generated/pico_pio_interrupts.pio.h
 #        )
 
 # add url via pico_set_program_url
