@@ -31,7 +31,7 @@ output:
 ;;;; PIO for counting incoming pulses during gate low.
 .program pulse_count
 .side_set 1 opt
-    mov x, osr side 1           ; load x scratch with max value (2^31-1)
+    mov x, osr           ; load x scratch with max value (2^31-1)
     ;irq set 5
     wait 1 pin 0         ;
     wait 0 pin 0 side 0  ; detect falling edge of gate
