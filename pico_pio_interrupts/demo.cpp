@@ -15,7 +15,6 @@
 
 PIO sd_pio = pio0;
 
-
 int main() {
 
 //    gpio_init(OUTPUT_SIG);
