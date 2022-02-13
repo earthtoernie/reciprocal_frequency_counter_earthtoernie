@@ -58,7 +58,7 @@ void init_sm(uint16_t freq) {
 //    pio_sm_set_enabled(sd_pio, 2, true);
     pio_sm_set_enabled(sd_pio, 0, true);
     pio_set_irq0_source_enabled(sd_pio, pis_interrupt0, true);
-    pio_set_irq1_source_enabled(sd_pio, pis_interrupt1, false); // TODO write a program to test two stat machines that communicate with interrupts
+    //pio_set_irq1_source_enabled(sd_pio, pis_interrupt1, false); // TODO write a program to test two stat machines that communicate with interrupts
 
 
 }
@@ -70,7 +70,7 @@ void isr()
     irq_clear(PIO0_IRQ_0);
 
     printf("IRQ\n");
-    pio_sm_put(sd_pio, 0, 125000);
+    pio_sm_put(sd_pio, 0, 125000000);
     pio_sm_exec(sd_pio, 0, pio_encode_pull(false, false));
     if(!update_flag){
         printf("irq");

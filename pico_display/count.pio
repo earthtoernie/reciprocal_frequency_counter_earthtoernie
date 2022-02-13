@@ -1,7 +1,7 @@
 ;;;; PIO to generate gate signal.
 .program gate
 .side_set 1 opt
-    set pindirs, 0 ; not sure we need this
+    ;set pindirs, 0 ; not sure we need this
     mov x, osr side 1            ; load gate time (in clock pulses) from osr, HAVE TO SIDESET TO GET INITIAL CONDITION
     wait 0 pin 0           ; wait for input to go low
     wait 1 pin 0           ; wait for input to go high, effectively giving us rising edge detection
@@ -15,16 +15,19 @@ loopstart:
 
 ;;;; PIO for counting clock pulses during gate low.
 .program clock_count
-    mov x, osr             ; load x scratch with max value (2^31-1)
-    wait 1 pin 0         ; detect falling edge
-    wait 0 pin 0         ; of gate signal
-counter:
-    jmp pin, output        ; as long as gate is low //
-    jmp x--, counter       ; decrement x reg (counting every other clock cycle - have to multiple output value by 2)
-output:
-    mov isr x              ; move clock count value to isr
-    push                   ; send date to FIFO
-    irq 4            ; set irq and wait for gate PIO to acknowledge
+foo:
+    irq set 4
+    jmp foo
+;    mov x, osr             ; load x scratch with max value (2^31-1)
+;    wait 1 pin 0         ; detect falling edge
+;    wait 0 pin 0         ; of gate signal
+;counter:
+;    jmp pin, output        ; as long as gate is low //
+;    jmp x--, counter       ; decrement x reg (counting every other clock cycle - have to multiple output value by 2)
+;output:
+;    mov isr x              ; move clock count value to isr
+;    push                   ; send date to FIFO
+;    irq set 4            ; set irq and wait for gate PIO to acknowledge
 
 
 
@@ -42,7 +45,7 @@ counter:
 output:
     mov isr, x side 1      ; move pulse count value to isr and set pon to high to tell clock counting sm to stop counting
     push                   ; send data to FIFO
-    irq 5            ; set irq and wait for gate PIO to acknowledge
+    irq set 5            ; set irq and wait for gate PIO to acknowledge
 
 
 % c-sdk {
