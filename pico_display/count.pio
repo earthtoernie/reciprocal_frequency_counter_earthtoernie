@@ -11,7 +11,7 @@ loopstart:
     wait 1 pin 0 side 1    ; set gate to high on rising edge
     irq wait 0 ;rel           ; set interrupt 0 flag and wait for system handler to service interrupt
     wait 1 irq 4           ; wait for irq from clock counting state machine
-    ;wait 1 irq 5           ; wait for irq from pulse counting state machine
+;    wait 1 irq 5           ; wait for irq from pulse counting state machine
 
 ;;;; PIO for counting clock pulses during gate low.
 .program clock_count
@@ -31,18 +31,19 @@ output:
 ;;;; PIO for counting incoming pulses during gate low.
 .program pulse_count
 .side_set 1 opt
-    nop side 1            ; load x scratch with max value (2^31-1)
-;    wait 1 pin 0         ;
-;    wait 0 pin 0 side 0  ; detect falling edge of gate
-;counter:
-;    wait 0 pin 1         ; wait for rising
-;    wait 1 pin 1         ; edge of input signal
-;    jmp pin, output        ; as long as gate is low //
-;    jmp x--, counter       ; decrement x req counting incoming pulses (probably will count one pulse less than it should - to be checked later)
-;output:
-;    mov isr, x side 1      ; move pulse count value to isr and set pon to high to tell clock counting sm to stop counting
-;    push                   ; send data to FIFO
-;    irq set 5            ; set irq and wait for gate PIO to acknowledge
+    mov x, osr side 1           ; load x scratch with max value (2^31-1)
+    ;irq set 5
+    wait 1 pin 0         ;
+    wait 0 pin 0 side 0  ; detect falling edge of gate
+counter:
+    wait 0 pin 1         ; wait for rising
+    wait 1 pin 1         ; edge of input signal
+    jmp pin, output        ; as long as gate is low //
+    jmp x--, counter       ; decrement x req counting incoming pulses (probably will count one pulse less than it should - to be checked later)
+output:
+    mov isr, x side 1      ; move pulse count value to isr and set pon to high to tell clock counting sm to stop counting
+    push                   ; send data to FIFO
+    irq set 5            ; set irq and wait for gate PIO to acknowledge
 
 
 % c-sdk {
@@ -99,7 +100,7 @@ void clock_count_program_init(PIO pio, uint sm, uint offset) {
 
 void pulse_count_program_init(PIO pio, uint sm, uint offset) {
    pio_gpio_init(pio, 4); // 4 is gate pin
-   pio_gpio_init(pio, 4); // 3 is pulse fin pin
+   pio_gpio_init(pio, 5); // 3 is pulse fin pin
 
    pio_sm_config c = gate_program_get_default_config(offset);
 
@@ -108,7 +109,7 @@ void pulse_count_program_init(PIO pio, uint sm, uint offset) {
    sm_config_set_sideset_pins(&c, 3); // 4 is gate pin
 
    sm_config_set_in_pins(&c, 4); // for WAIT
-   sm_config_set_jmp_pin(&c, 3); // for JMP
+   sm_config_set_jmp_pin(&c, 4); // for JMP
 
    pio_sm_init(pio, sm, offset, &c);
 }
