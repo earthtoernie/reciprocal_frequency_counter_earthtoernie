@@ -40,7 +40,7 @@ void init_sm(uint16_t freq) {
     // starts state machines.
     uint offset_gate_program = pio_add_program(sd_pio, &gate_program);
     uint offset_clock_count_program = pio_add_program(sd_pio, &clock_count_program);
-    //uint offset_pulse_count_program = pio_add_program(sd_pio, &pulse_count_program);
+    uint offset_pulse_count_program = pio_add_program(sd_pio, &pulse_count_program);
 
     gate_program_init(sd_pio, 0, offset_gate_program);
     pio_sm_put(sd_pio, 0, freq);
@@ -50,12 +50,12 @@ void init_sm(uint16_t freq) {
     pio_sm_put(sd_pio, 1, max_count);
     pio_sm_exec(sd_pio, 1, pio_encode_pull(false, false));
 
-//    pulse_count_program_init(sd_pio, 2, offset_pulse_count_program);
-//    pio_sm_put(sd_pio, 2, max_count-1);
-//    pio_sm_exec(sd_pio, 2, pio_encode_pull(false, false));
+    pulse_count_program_init(sd_pio, 2, offset_pulse_count_program);
+    pio_sm_put(sd_pio, 2, max_count-1);
+    pio_sm_exec(sd_pio, 2, pio_encode_pull(false, false));
 
     pio_sm_set_enabled(sd_pio, 1, true);
-//    pio_sm_set_enabled(sd_pio, 2, true);
+    pio_sm_set_enabled(sd_pio, 2, true);
     pio_sm_set_enabled(sd_pio, 0, true);
     pio_set_irq0_source_enabled(sd_pio, pis_interrupt0, true);
     //pio_set_irq1_source_enabled(sd_pio, pis_interrupt1, false); // TODO write a program to test two stat machines that communicate with interrupts
@@ -75,8 +75,8 @@ void isr()
     if(!update_flag){
         printf("irq");
 
-        //data[0] = pio_sm_get(sd_pio, 1);
-        //data[1] = pio_sm_get(sd_pio, 2);
+        data[0] = pio_sm_get(sd_pio, 1);
+        data[1] = pio_sm_get(sd_pio, 2);
         update_flag = true;
     }
 //    pio_interrupt_clear(pio0, 0);

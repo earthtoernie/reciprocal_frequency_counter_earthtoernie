@@ -15,37 +15,34 @@ loopstart:
 
 ;;;; PIO for counting clock pulses during gate low.
 .program clock_count
-foo:
-    irq set 4
-    jmp foo
-;    mov x, osr             ; load x scratch with max value (2^31-1)
-;    wait 1 pin 0         ; detect falling edge
-;    wait 0 pin 0         ; of gate signal
-;counter:
-;    jmp pin, output        ; as long as gate is low //
-;    jmp x--, counter       ; decrement x reg (counting every other clock cycle - have to multiple output value by 2)
-;output:
-;    mov isr x              ; move clock count value to isr
-;    push                   ; send date to FIFO
-;    irq set 4            ; set irq and wait for gate PIO to acknowledge
+    mov x, osr             ; load x scratch with max value (2^31-1)
+    wait 1 pin 0         ; detect falling edge
+    wait 0 pin 0         ; of gate signal
+counter:
+    jmp pin, output        ; as long as gate is low //
+    jmp x--, counter       ; decrement x reg (counting every other clock cycle - have to multiple output value by 2)
+output:
+    mov isr x              ; move clock count value to isr
+    push                   ; send date to FIFO
+    irq set 4            ; set irq and wait for gate PIO to acknowledge
 
 
 
 ;;;; PIO for counting incoming pulses during gate low.
 .program pulse_count
 .side_set 1 opt
-    mov x, osr side 1            ; load x scratch with max value (2^31-1)
-    wait 1 pin 0         ;
-    wait 0 pin 0 side 0  ; detect falling edge of gate
-counter:
-    wait 0 pin 1         ; wait for rising
-    wait 1 pin 1         ; edge of input signal
-    jmp pin, output        ; as long as gate is low //
-    jmp x--, counter       ; decrement x req counting incoming pulses (probably will count one pulse less than it should - to be checked later)
-output:
-    mov isr, x side 1      ; move pulse count value to isr and set pon to high to tell clock counting sm to stop counting
-    push                   ; send data to FIFO
-    irq set 5            ; set irq and wait for gate PIO to acknowledge
+    nop side 1            ; load x scratch with max value (2^31-1)
+;    wait 1 pin 0         ;
+;    wait 0 pin 0 side 0  ; detect falling edge of gate
+;counter:
+;    wait 0 pin 1         ; wait for rising
+;    wait 1 pin 1         ; edge of input signal
+;    jmp pin, output        ; as long as gate is low //
+;    jmp x--, counter       ; decrement x req counting incoming pulses (probably will count one pulse less than it should - to be checked later)
+;output:
+;    mov isr, x side 1      ; move pulse count value to isr and set pon to high to tell clock counting sm to stop counting
+;    push                   ; send data to FIFO
+;    irq set 5            ; set irq and wait for gate PIO to acknowledge
 
 
 % c-sdk {
