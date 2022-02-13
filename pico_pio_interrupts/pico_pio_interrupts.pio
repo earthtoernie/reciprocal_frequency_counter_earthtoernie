@@ -1,115 +1,32 @@
 ;;;; PIO to generate gate signal.
-.program gate
-.side_set 1 opt
-    set pindirs, 0 ; not sure we need this
-    mov x, osr side 1            ; load gate time (in clock pulses) from osr, HAVE TO SIDESET TO GET INITIAL CONDITION
-    wait 0 pin 0           ; wait for input to go low
-    wait 1 pin 0           ; wait for input to go high, effectively giving us rising edge detection
+.program blinker
+    set pindirs, 1 ; not sure we need this
 loopstart:
-    jmp x--, loopstart side 0 ; keep gate low for time programmed by setting x reg
-    wait 0 pin 0           ; wait for input to go low
-    wait 1 pin 0 side 1    ; set gate to high on rising edge
-    irq wait 0 ;rel           ; set interrupt 0 flag and wait for system handler to service interrupt
-    wait 1 irq 4           ; wait for irq from clock counting state machine
-    ;wait 1 irq 5           ; wait for irq from pulse counting state machine
+    set pins, 1 [10]
+    set pins, 0 [10]
+    jmp loopstart
 
-;;;; PIO for counting clock pulses during gate low.
-.program clock_count
-    mov x, osr             ; load x scratch with max value (2^31-1)
-    wait 1 pin 0         ; detect falling edge
-    wait 0 pin 0         ; of gate signal
-counter:
-    jmp pin, output        ; as long as gate is low //
-    jmp x--, counter       ; decrement x reg (counting every other clock cycle - have to multiple output value by 2)
-output:
-    mov isr x              ; move clock count value to isr
-    push                   ; send date to FIFO
-    irq 4            ; set irq and wait for gate PIO to acknowledge
-
-
-
-;;;; PIO for counting incoming pulses during gate low.
-.program pulse_count
-.side_set 1 opt
-    mov x, osr side 1            ; load x scratch with max value (2^31-1)
-    wait 1 pin 0         ;
-    wait 0 pin 0 side 0  ; detect falling edge of gate
-counter:
-    wait 0 pin 1         ; wait for rising
-    wait 1 pin 1         ; edge of input signal
-    jmp pin, output        ; as long as gate is low //
-    jmp x--, counter       ; decrement x req counting incoming pulses (probably will count one pulse less than it should - to be checked later)
-output:
-    mov isr, x side 1      ; move pulse count value to isr and set pon to high to tell clock counting sm to stop counting
-    push                   ; send data to FIFO
-    irq 5            ; set irq and wait for gate PIO to acknowledge
 
 
 % c-sdk {
 
 // Helper function (for use in C program) to initialize this PIO program
-void gate_program_init(PIO pio, uint sm, uint offset) {
-   pio_sm_config c = gate_program_get_default_config(offset);
+void blinker_program_init(PIO pio, uint sm, uint offset, uint pin) {
 
-   pio_gpio_init(pio, 5); // 5 is input pin
-   pio_gpio_init(pio, 4); // 4 is gate pin
+   pio_gpio_init(pio, pin); // Set this pin's GPIO function (connect PIO to the pad)
+   pio_sm_set_consecutive_pindirs(pio, sm, pin, 1, true);
 
-   sm_config_set_in_pins(&c, 5); // this is needed to set as input!!
+   pio_sm_config c = blinker_program_get_default_config(offset);
+   sm_config_set_clkdiv (&c, 1000.0);
+   sm_config_set_set_pins(&c, pin, 1); // this is needed to set as output!! NOT sm_config_set_out_pins
+
+
 
    //pio_sm_set_consecutive_pindirs(pio, sm, 5, 1, false); // dont think this does anything
-   pio_sm_set_consecutive_pindirs(pio, sm, 4, 1, true);
 
-   sm_config_set_sideset_pins(&c, 4); // 4 is gate pin
-
-    pio_set_irq0_source_enabled(pio, pis_interrupt0, true);
-    //pio_interrupt_clear(pio, sm);
 
    pio_sm_init(pio, sm, offset, &c);
 
-    // Sets up state machine and wrap target. This function is automatically
-    // generated in blink.pio.h.
-    //pio_sm_config c = count_program_get_default_config(offset);
-
-    // Allow PIO to control GPIO pin (as output)
-    //pio_gpio_init(pio, pin);
-
-    // Connect pin to SET pin (control with 'set' instruction)
-    //sm_config_set_set_pins(&c, pin, 1);
-
-    // Set the pin direction to output (in PIO)
-    //pio_sm_set_consecutive_pindirs(pio, sm, pin, 1, true);
-
-    // Set the clock divider for the state machine
-    //sm_config_set_clkdiv(&c, div);
-
-    // Load configuration and jump to start of the program
-    //pio_sm_init(pio, sm, offset, &c);
 }
 
-void clock_count_program_init(PIO pio, uint sm, uint offset) {
-   pio_gpio_init(pio, 4); // 4 is gate pin
-   pio_gpio_init(pio, 3); // 3 is pulse fin pin
-   pio_sm_config c = gate_program_get_default_config(offset);
-   sm_config_set_in_pins(&c, 4); // for WAIT
-   sm_config_set_jmp_pin(&c, 3); // for JMP
-   //pio_sm_set_consecutive_pindirs(pio, sm, pin, 1, true);
-   pio_sm_init(pio, sm, offset, &c);
-}
-
-
-void pulse_count_program_init(PIO pio, uint sm, uint offset) {
-   pio_gpio_init(pio, 4); // 4 is gate pin
-   pio_gpio_init(pio, 4); // 3 is pulse fin pin
-
-   pio_sm_config c = gate_program_get_default_config(offset);
-
-   pio_sm_set_consecutive_pindirs(pio, sm, 3, 1, true);
-
-   sm_config_set_sideset_pins(&c, 3); // 4 is gate pin
-
-   sm_config_set_in_pins(&c, 4); // for WAIT
-   sm_config_set_jmp_pin(&c, 3); // for JMP
-
-   pio_sm_init(pio, sm, offset, &c);
-}
 %}

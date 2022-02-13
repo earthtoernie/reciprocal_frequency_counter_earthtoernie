@@ -4,7 +4,7 @@ add_executable(
 )
 
 # Pull in pico libraries that we need
-target_link_libraries(pico_pio_interrupts pico_stdlib)
+target_link_libraries(pico_pio_interrupts pico_stdlib hardware_pio)
 
 # create map/bin/hex file etc.
 pico_add_extra_outputs(pico_pio_interrupts)
