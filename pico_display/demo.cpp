@@ -26,48 +26,11 @@ PIO sd_pio = pio0;
 volatile bool update_flag = false;
 uint16_t data [2] = { 0, 0 };
 
-void init_sm(uint16_t freq) {
-    gpio_init(INPUT_PIN);
-    gpio_init(GATE_PIN);
-    gpio_init(PULSE_FIN_PIN);
-    gpio_set_dir(INPUT_PIN, GPIO_IN);
-    gpio_set_dir(GATE_PIN, GPIO_OUT);
-    gpio_set_dir(PULSE_FIN_PIN, GPIO_OUT);
-    gpio_put(GATE_PIN, 1);
-    gpio_put(PULSE_FIN_PIN, 1);
-
-
-    // starts state machines.
-    uint offset_gate_program = pio_add_program(sd_pio, &gate_program);
-    uint offset_clock_count_program = pio_add_program(sd_pio, &clock_count_program);
-    uint offset_pulse_count_program = pio_add_program(sd_pio, &pulse_count_program);
-
-    gate_program_init(sd_pio, 0, offset_gate_program);
-    pio_sm_put(sd_pio, 0, freq);
-    pio_sm_exec(sd_pio, 0, pio_encode_pull(false, false));
-
-    clock_count_program_init(sd_pio, 1, offset_clock_count_program);
-    pio_sm_put(sd_pio, 1, max_count);
-    pio_sm_exec(sd_pio, 1, pio_encode_pull(false, false));
-
-    pulse_count_program_init(sd_pio, 2, offset_pulse_count_program);
-    pio_sm_put(sd_pio, 2, max_count-1);
-    pio_sm_exec(sd_pio, 2, pio_encode_pull(false, false));
-
-    pio_sm_set_enabled(sd_pio, 1, true);
-    pio_sm_set_enabled(sd_pio, 2, true);
-    pio_sm_set_enabled(sd_pio, 0, true);
-    pio_set_irq0_source_enabled(sd_pio, pis_interrupt0, true);
-    //pio_set_irq1_source_enabled(sd_pio, pis_interrupt1, false); // TODO write a program to test two stat machines that communicate with interrupts
-
-
-}
-
 //https://raspberrypi.github.io/pico-sdk-doxygen/group__hardware__irq.html
 void isr()
 {
     pio_interrupt_clear(pio0, 0);
-    irq_clear(PIO0_IRQ_0);
+    //irq_clear(PIO0_IRQ_0);
 
     printf("IRQ\n");
     pio_sm_put(sd_pio, 0, 125000000);
@@ -84,8 +47,51 @@ void isr()
 //    irq_clear(PIO0_IRQ_0);
 }
 
+void init_sm(uint32_t freq) {
+    gpio_init(INPUT_PIN);
+    gpio_init(GATE_PIN);
+    gpio_init(PULSE_FIN_PIN);
+    gpio_set_dir(INPUT_PIN, GPIO_IN);
+    gpio_set_dir(GATE_PIN, GPIO_OUT);
+    gpio_set_dir(PULSE_FIN_PIN, GPIO_OUT);
+    gpio_put(GATE_PIN, 1);
+    gpio_put(PULSE_FIN_PIN, 1);
+
+
+    // starts state machines.
+    uint offset_gate_program = pio_add_program(sd_pio, &gate_program);
+    uint offset_clock_count_program = pio_add_program(sd_pio, &clock_count_program);
+    uint offset_pulse_count_program = pio_add_program(sd_pio, &pulse_count_program);
+
+    gate_program_init(sd_pio, 0, offset_gate_program);
+    pio_sm_put_blocking(sd_pio, 0, freq);
+    pio_sm_exec(sd_pio, 0, pio_encode_pull(false, false));
+
+//    clock_count_program_init(sd_pio, 1, offset_clock_count_program);
+//    pio_sm_put(sd_pio, 1, max_count);
+//    pio_sm_exec(sd_pio, 1, pio_encode_pull(false, false));
+//
+//    pulse_count_program_init(sd_pio, 2, offset_pulse_count_program);
+//    pio_sm_put(sd_pio, 2, max_count-1);
+//    pio_sm_exec(sd_pio, 2, pio_encode_pull(false, false));
+
+//    pio_sm_set_enabled(sd_pio, 1, true);
+//    pio_sm_set_enabled(sd_pio, 2, true);
+
+    irq_set_exclusive_handler(PIO0_IRQ_0, isr);
+    irq_set_enabled(PIO0_IRQ_0, true);
+    pio_set_irq0_source_enabled(sd_pio, pis_interrupt0, true);
+    pio_sm_set_enabled(sd_pio, 0, true);
+
+
+}
+
+
+
 //void count_handler(sm)
 int main(){
+
+    // minicom -D /dev/ttyACM0 -b 115200
 
     // https://forums.raspberrypi.com/viewtopic.php?t=316677
     stdio_init_all();
@@ -94,11 +100,9 @@ int main(){
     printf("hello world\n");
 
     init_sm(125000000);
-    irq_set_exclusive_handler(PIO0_IRQ_0, isr);
-    irq_set_enabled(PIO0_IRQ_0, true);
-    pio_set_irq0_source_enabled(sd_pio, pis_interrupt0, true);
 
-    uint32_t i;
+
+    uint32_t i = 0;
     while(true){
         if(update_flag == true) {
             uint32_t clock_count = 2*(max_count - data[0]+1);

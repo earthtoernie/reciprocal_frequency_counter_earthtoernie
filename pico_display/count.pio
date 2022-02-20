@@ -10,7 +10,7 @@ loopstart:
     wait 0 pin 0           ; wait for input to go low
     wait 1 pin 0 side 1    ; set gate to high on rising edge
     irq wait 0 ;rel           ; set interrupt 0 flag and wait for system handler to service interrupt
-    wait 1 irq 4           ; wait for irq from clock counting state machine
+;    wait 1 irq 4           ; wait for irq from clock counting state machine
 ;    wait 1 irq 5           ; wait for irq from pulse counting state machine
 
 ;;;; PIO for counting clock pulses during gate low.
