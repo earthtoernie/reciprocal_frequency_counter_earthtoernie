@@ -32,9 +32,11 @@ output:
 .program pulse_count
 .side_set 1 opt
 .wrap_target
-    nop side 1
-    mov isr, x
+    mov osr, x side 1
     wait 1 pin 0
+    wait 0 pin 1 side 0
+    ;wait 0 pin 1         ; wait for rising
+    ;wait 1 pin 1         ; edge of input signal
     irq set 5
     nop side 0
 ;    mov x, osr side 1           ; load x scratch with max value (2^31-1)
@@ -106,9 +108,9 @@ void pulse_count_program_init(PIO pio, uint sm, uint offset) {
    sm_config_set_sideset_pins(&c, 3); // 3 is pulse fin pin
 
 
-   //pio_sm_set_consecutive_pindirs(pio, sm, 4, 2, false);
+   //pio_sm_set_consecutive_pindirs(pio, sm, 4, 1, false);
    sm_config_set_in_pins(&c, 4); // for WAIT
-   sm_config_set_in_pins(&c, 5); // for WAIT
+   //sm_config_set_in_pins(&c, 5); // for WAIT
 
    sm_config_set_jmp_pin(&c, 4); // for JMP
 
