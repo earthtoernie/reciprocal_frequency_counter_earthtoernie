@@ -31,7 +31,8 @@ output:
 ;;;; PIO for counting incoming pulses during gate low.
 .program pulse_count
 .side_set 1 opt
-    mov x, osr           ; load x scratch with max value (2^31-1)
+.wrap_target
+    mov x, osr side 1           ; load x scratch with max value (2^31-1)
     ;irq set 5
     wait 1 pin 0         ;
     wait 0 pin 0 side 0  ; detect falling edge of gate
@@ -50,32 +51,22 @@ output:
 
 // Helper function (for use in C program) to initialize this PIO program
 void gate_program_init(PIO pio, uint sm, uint offset) {
-   pio_sm_config c = gate_program_get_default_config(offset);
+   pio_sm_config c = gate_program_get_default_config(offset); // Sets up state machine and wrap target.  This function is automatically generated in count.pio.h
 
-   pio_gpio_init(pio, 5); // 5 is input pin
-   pio_gpio_init(pio, 4); // 4 is gate pin
+   pio_gpio_init(pio, 5); // 5 is input pin (input) Allow PIO to control GPIO pin
+   pio_gpio_init(pio, 4); // 4 is gate pin (output) Allow PIO to control GPIO pin
 
    sm_config_set_in_pins(&c, 5); // this is needed to set as input!!
 
    //pio_sm_set_consecutive_pindirs(pio, sm, 5, 1, false); // dont think this does anything
    pio_sm_set_consecutive_pindirs(pio, sm, 4, 1, true);
 
-   sm_config_set_sideset_pins(&c, 4); // 4 is gate pin
+   sm_config_set_sideset_pins(&c, 4); // 4 is gate pin, // Connect pin to SIDESET pin (control with 'sideset' directive)
 
     pio_set_irq0_source_enabled(pio, pis_interrupt0, true);
     //pio_interrupt_clear(pio, sm);
 
    pio_sm_init(pio, sm, offset, &c);
-
-    // Sets up state machine and wrap target. This function is automatically
-    // generated in blink.pio.h.
-    //pio_sm_config c = count_program_get_default_config(offset);
-
-    // Allow PIO to control GPIO pin (as output)
-    //pio_gpio_init(pio, pin);
-
-    // Connect pin to SET pin (control with 'set' instruction)
-    //sm_config_set_set_pins(&c, pin, 1);
 
     // Set the pin direction to output (in PIO)
     //pio_sm_set_consecutive_pindirs(pio, sm, pin, 1, true);
@@ -90,7 +81,7 @@ void gate_program_init(PIO pio, uint sm, uint offset) {
 void clock_count_program_init(PIO pio, uint sm, uint offset) {
    pio_gpio_init(pio, 4); // 4 is gate pin
    pio_gpio_init(pio, 3); // 3 is pulse fin pin
-   pio_sm_config c = gate_program_get_default_config(offset);
+   pio_sm_config c = clock_count_program_get_default_config(offset);
    sm_config_set_in_pins(&c, 4); // for WAIT
    sm_config_set_jmp_pin(&c, 3); // for JMP
    //pio_sm_set_consecutive_pindirs(pio, sm, pin, 1, true);
@@ -99,16 +90,21 @@ void clock_count_program_init(PIO pio, uint sm, uint offset) {
 
 
 void pulse_count_program_init(PIO pio, uint sm, uint offset) {
-   pio_gpio_init(pio, 4); // 4 is gate pin
-   pio_gpio_init(pio, 5); // 3 is pulse fin pin
+   pio_sm_config c = pulse_count_program_get_default_config(offset);
 
-   pio_sm_config c = gate_program_get_default_config(offset);
+   pio_gpio_init(pio, 4); // 4 is gate pin INPUT
+   pio_gpio_init(pio, 5); // 5 counter pin INPUT
+
+   pio_gpio_init(pio, 3); // 3 is pulse fin pin OUTPUT
 
    pio_sm_set_consecutive_pindirs(pio, sm, 3, 1, true);
+   sm_config_set_sideset_pins(&c, 3); // 3 is pulse fin pin
 
-   sm_config_set_sideset_pins(&c, 3); // 4 is gate pin
 
+   //pio_sm_set_consecutive_pindirs(pio, sm, 4, 2, false);
    sm_config_set_in_pins(&c, 4); // for WAIT
+   sm_config_set_in_pins(&c, 5); // for WAIT
+
    sm_config_set_jmp_pin(&c, 4); // for JMP
 
    pio_sm_init(pio, sm, offset, &c);
