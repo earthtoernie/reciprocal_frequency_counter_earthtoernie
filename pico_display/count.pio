@@ -32,26 +32,18 @@ output:
 .program pulse_count
 .side_set 1 opt
 .wrap_target
-    mov osr, x side 1
+    mov x, osr side 1           ; load x scratch with max value (2^31-1)
     wait 1 pin 0
-    wait 0 pin 1 side 0
-    ;wait 0 pin 1         ; wait for rising
-    ;wait 1 pin 1         ; edge of input signal
-    irq set 5
-    nop side 0
-;    mov x, osr side 1           ; load x scratch with max value (2^31-1)
-;    ;irq set 5
-;    wait 1 pin 0         ;
-;    wait 0 pin 0 side 0  ; detect falling edge of gate
-;counter:
-;    wait 0 pin 1         ; wait for rising
-;    wait 1 pin 1         ; edge of input signal
-;    jmp pin, output        ; as long as gate is low //
-;    jmp x--, counter       ; decrement x req counting incoming pulses (probably will count one pulse less than it should - to be checked later)
-;output:
-;    mov isr, x side 1      ; move pulse count value to isr and set pon to high to tell clock counting sm to stop counting
-;    push                   ; send data to FIFO
-;    irq set 5            ; set irq and wait for gate PIO to acknowledge
+    wait 0 pin 0 side 0  ; detect falling edge of gate
+counter:
+    wait 0 pin 1         ; wait for rising
+    wait 1 pin 1         ; edge of input signal
+    jmp pin, output        ; as long as gate is low //
+    jmp x--, counter       ; decrement x req counting incoming pulses (probably will count one pulse less than it should - to be checked later)
+output:
+    mov isr, x side 0      ; move pulse count value to isr and set pon to high to tell clock counting sm to stop counting
+    push                   ; send data to FIFO
+    irq wait 5          ; set irq and wait for gate PIO to acknowledge
 
 
 % c-sdk {
