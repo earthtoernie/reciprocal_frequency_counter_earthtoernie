@@ -24,14 +24,13 @@ counter:
 output:
     mov isr x              ; move clock count value to isr
     push                   ; send date to FIFO
-    irq set 4            ; set irq and wait for gate PIO to acknowledge
+    irq wait 4            ; set irq and wait for gate PIO to acknowledge
 
 
 
 ;;;; PIO for counting incoming pulses during gate low.
 .program pulse_count
 .side_set 1 opt
-.wrap_target
     mov x, osr side 0           ; load x scratch with max value (2^31-1)
     wait 1 pin 0
     wait 0 pin 0 side 0  ; detect falling edge of gate
