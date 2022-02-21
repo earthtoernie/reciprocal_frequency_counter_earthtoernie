@@ -24,7 +24,7 @@ uint32_t max_count = 4294967295;// const((1 << 32) - 1), highest unsigned int
 
 PIO sd_pio = pio0;
 volatile bool update_flag = false;
-uint16_t data [2] = { 0, 0 };
+uint32_t data [2] = { 0, 0 };
 
 //https://raspberrypi.github.io/pico-sdk-doxygen/group__hardware__irq.html
 void isr()
@@ -32,11 +32,12 @@ void isr()
     pio_interrupt_clear(pio0, 0);
     //irq_clear(PIO0_IRQ_0);
 
-    printf("IRQ\n");
-    pio_sm_put(sd_pio, 0, 125000000);
-    pio_sm_exec(sd_pio, 0, pio_encode_pull(false, false));
+    printf("IRQ: ");
+
     if(!update_flag){
-        printf("irq: ");
+        pio_sm_put(sd_pio, 0, 125000000);
+        pio_sm_exec(sd_pio, 0, pio_encode_pull(false, false));
+        //printf("irq: ");
 
         data[0] = pio_sm_get(sd_pio, 1);
         data[1] = pio_sm_get(sd_pio, 2);
@@ -67,9 +68,9 @@ void init_sm(uint32_t freq) {
     pio_sm_put_blocking(sd_pio, 0, freq);
     pio_sm_exec(sd_pio, 0, pio_encode_pull(false, false));
 
-//    clock_count_program_init(sd_pio, 1, offset_clock_count_program);
-//    pio_sm_put(sd_pio, 1, max_count);
-//    pio_sm_exec(sd_pio, 1, pio_encode_pull(false, false));
+    clock_count_program_init(sd_pio, 1, offset_clock_count_program);
+    pio_sm_put(sd_pio, 1, max_count);
+    pio_sm_exec(sd_pio, 1, pio_encode_pull(false, false));
 //
     pulse_count_program_init(sd_pio, 2, offset_pulse_count_program);
     pio_sm_put(sd_pio, 2, max_count-1);
@@ -82,6 +83,7 @@ void init_sm(uint32_t freq) {
     irq_set_enabled(PIO0_IRQ_0, true);
     pio_set_irq0_source_enabled(sd_pio, pis_interrupt0, true);
 
+    pio_sm_set_enabled(sd_pio, 1, true);
     pio_sm_set_enabled(sd_pio, 2, true);
     pio_sm_set_enabled(sd_pio, 0, true);
 
@@ -113,7 +115,7 @@ int main(){
             printf("%d\n", i);
             printf("Clock count: %u\n", clock_count);
             printf("Input count: %u\n", pulse_count);
-            printf("Frequency: %f", frequency);
+            printf("Frequency: %f\n", frequency);
             i++;
             update_flag = false;
         }
