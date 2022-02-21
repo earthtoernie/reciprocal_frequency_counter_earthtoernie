@@ -72,8 +72,8 @@ void init_sm(uint32_t freq) {
 //    pio_sm_exec(sd_pio, 1, pio_encode_pull(false, false));
 //
     pulse_count_program_init(sd_pio, 2, offset_pulse_count_program);
-//    pio_sm_put(sd_pio, 2, max_count-1);
-//    pio_sm_exec(sd_pio, 2, pio_encode_pull(false, false));
+    pio_sm_put(sd_pio, 2, max_count-1);
+    pio_sm_exec(sd_pio, 2, pio_encode_pull(false, false));
 
 //    pio_sm_set_enabled(sd_pio, 1, true);
 //    pio_sm_set_enabled(sd_pio, 2, true);
