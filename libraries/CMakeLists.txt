@@ -22,6 +22,7 @@ add_subdirectory(pico_display)
 add_subdirectory(pico_display_2)
 add_subdirectory(pico_unicorn)
 add_subdirectory(pico_scroll)
+add_subdirectory(pico_ss_oled) #added this custom library
 add_subdirectory(pico_explorer)
 add_subdirectory(pico_rgb_keypad)
 add_subdirectory(pico_wireless)
