@@ -4,8 +4,17 @@ add_executable(
         image_data.cpp
 )
 
+target_sources(display_oled PRIVATE
+        stripped.hpp
+        ss_oled.cpp
+        ss_oled.c
+        ss_oled.h
+        BitBang_I2C.h
+        BitBang_I2C.c
+        )
+
 # Pull in pico libraries that we need
-target_link_libraries(display_oled pico_ss_oled pico_stdlib hardware_spi hardware_clocks hardware_pwm hardware_pio hardware_dma)
+target_link_libraries(display_oled pico_stdlib hardware_i2c hardware_clocks hardware_pwm hardware_pio hardware_dma)
 
 # create map/bin/hex file etc.
 pico_add_extra_outputs(display_oled)

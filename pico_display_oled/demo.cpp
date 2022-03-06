@@ -17,10 +17,23 @@
 
 #include "ss_oled.h"
 
+#include "ss_oled.hpp"
+
+
 
 #define INPUT_PIN 5
 #define GATE_PIN 4
 #define PULSE_FIN_PIN 3
+
+// i2c stuff. oled stuff
+#define PICO_DEFAULT_I2C 1
+#define PICO_DEFAULT_I2C_SDA_PIN 26
+#define PICO_DEFAULT_I2C_SCL_PIN 27
+#define PICO_I2C i2c_default
+#define I2C_SPEED 100 * 1000
+
+#define OLED_WIDTH 128
+#define OLED_HEIGHT 64
 
 uint32_t max_count = 4294967295;// const((1 << 32) - 1), highest unsigned int
 
@@ -100,35 +113,29 @@ int main(){
     // minicom -D /dev/ttyACM0 -b 115200
     // https://forums.raspberrypi.com/viewtopic.php?t=316677
     stdio_init_all();
-    printf("hello world\n");
-    init_sm(125000000);
+    printf("hello world!\n");
+    static uint8_t  ubBuffer[1024];
+    int i, j, rc;
+    char szTemp[32];
+    printf("a\n");
+    picoSSOLED myOled(OLED_128x64, 0x3c, 0, 0, PICO_I2C, PICO_DEFAULT_I2C_SDA_PIN, PICO_DEFAULT_I2C_SCL_PIN, I2C_SPEED);
+    printf("b\n");
+    rc = myOled.init() ;
+    printf("c\n");
 
 
+    while(1){
+        printf("hello there!\n");
 
-    const uint LED_PIN = PICO_DEFAULT_LED_PIN;
-    gpio_init(LED_PIN);
-    gpio_set_dir(LED_PIN, GPIO_OUT);
-    blinkForever();
-//    while (true) {
-//        gpio_put(LED_PIN, 1);
-//        sleep_ms(250);
-//        gpio_put(LED_PIN, 0);
-//        sleep_ms(250);
-//    }
-//    while(true){
-//        if(update_flag == true) {
-//            uint32_t clock_count = 2*(max_count - data[0]+1);
-//            uint32_t pulse_count = max_count - data[1];
-//            float frequency = pulse_count * (125000208.6 / clock_count);
-//            printf("%d\n", i);
-//            printf("Clock count: %u\n", clock_count);
-//            printf("Input count: %u\n", pulse_count);
-//            printf("Frequency: %f\n", frequency);
-//            i++;
-//            update_flag = false;
-//        }
-//
-//    }
+        sleep_ms(2000);
+        if(rc != OLED_NOT_FOUND) {
+            printf("oled found!\n");
+        } else {
+            printf("oled not found\n");
+        }
+
+    }
+
 
 }
 
