@@ -1,28 +1,13 @@
-#include <string.h>
-#include <math.h>
-#include <vector>
-#include <cstdlib>
+#include <cstring>
 #include <hardware/regs/intctrl.h>
 #include <hardware/irq.h>
 #include <cstdio>
-#include <pico/stdio.h>
 #include <string>
-
-#include "hardware/pwm.h"
-#include "hardware/clocks.h"
 #include "pico/multicore.h"
-
 #include "hardware/pio.h"
-
 #include "count.pio.h"
-
-#include "pico/stdlib.h"
-
 #include "ss_oled.h"
-
 #include "ss_oled.hpp"
-
-
 
 #define INPUT_PIN 5
 #define GATE_PIN 4
@@ -33,7 +18,7 @@
 #define PICO_DEFAULT_I2C_SDA_PIN 26
 #define PICO_DEFAULT_I2C_SCL_PIN 27
 #define PICO_I2C i2c_default
-#define I2C_SPEED 100 * 1000
+#define I2C_SPEED 400000
 
 #define OLED_WIDTH 128
 #define OLED_HEIGHT 64
@@ -95,9 +80,6 @@ void init_sm(uint32_t freq) {
     pio_sm_put(sd_pio, 2, max_count-1);
     pio_sm_exec(sd_pio, 2, pio_encode_pull(false, false));
 
-//    pio_sm_set_enabled(sd_pio, 1, true);
-//    pio_sm_set_enabled(sd_pio, 2, true);
-
     irq_set_exclusive_handler(PIO0_IRQ_0, isr);
     irq_set_enabled(PIO0_IRQ_0, true);
     pio_set_irq0_source_enabled(sd_pio, pis_interrupt0, true);
@@ -109,62 +91,6 @@ void init_sm(uint32_t freq) {
 
 }
 
-void demoLoop(picoSSOLED myOled, int rc){
-    static uint8_t ucBuffer[1024];
-
-    if (rc != OLED_NOT_FOUND)
-    {
-        myOled.fill(0,1);
-        myOled.set_contrast(127);
-        myOled.write_string(0,0,0,(char *)"**************** ", FONT_8x8, 0, 1);
-        myOled.write_string(0,4,1,(char *)"Pi Pico SS_OLED", FONT_8x8, 0, 1);
-        myOled.write_string(0,8,2,(char *)"running on the", FONT_8x8, 0, 1);
-        myOled.write_string(0,8,3,(char *)"SSD1306 128x64", FONT_8x8, 0, 1);
-        myOled.write_string(0,4,4,(char *)"monochrome OLED", FONT_8x8, 0, 1);
-        myOled.write_string(0,0,5,(char *)"Written by L BANK", FONT_8x8, 0, 1);
-        myOled.write_string(0,4,6,(char *)"Pico by M KOOIJ", FONT_8x8, 0, 1);
-        myOled.write_string(0,0,7,(char *)"**************** ", FONT_8x8, 0, 1);
-        sleep_ms(5000);
-    }
-
-    myOled.fill(0,1);
-    myOled.write_string(0,0,0,(char *)"Now with 5 font sizes", FONT_6x8, 0, 1);
-    myOled.write_string(0,0,1,(char *)"6x8 8x8 16x16", FONT_8x8, 0, 1);
-    myOled.write_string(0,0,2,(char *)"16x32 and a new", FONT_8x8, 0, 1);
-    myOled.write_string(0,0,3,(char *)"Stretched", FONT_12x16, 0, 1);
-    myOled.write_string(0,0,5,(char *)"from 6x8", FONT_12x16, 0, 1);
-    sleep_ms(5000);
-
-
-    int x, y;
-    myOled.fill(0, 1);
-    myOled.write_string(0,0,0,(char *)"Backbuffer Test", FONT_NORMAL,0,1);
-    myOled.write_string(0,0,1,(char *)"96 lines", FONT_NORMAL,0,1);
-    sleep_ms(2000);
-    for (x=0; x<OLED_WIDTH-1; x+=2)
-    {
-        myOled.draw_line(x, 0, OLED_WIDTH-x, OLED_HEIGHT-1, 1);
-    };
-    for (y=0; y<OLED_HEIGHT-1; y+=2)
-    {
-        myOled.draw_line(OLED_WIDTH-1,y, 0,OLED_HEIGHT-1-y, 1);
-    };
-    myOled.write_string(0,0,1,(char *)"Without backbuffer", FONT_SMALL,0,1);
-    sleep_ms(2000);
-    myOled.fill(0,1);
-    for (x=0; x<OLED_WIDTH-1; x+=2)
-    {
-        myOled.draw_line(x, 0, OLED_WIDTH-1-x, OLED_HEIGHT-1, 0);
-    }
-    for (y=0; y<OLED_HEIGHT-1; y+=2)
-    {
-        myOled.draw_line(OLED_WIDTH-1,y, 0,OLED_HEIGHT-1-y, 0);
-    }
-    myOled.dump_buffer(ucBuffer);
-    myOled.write_string(0,0,1,(char *)"With backbuffer", FONT_SMALL,0,1);
-    sleep_ms(2000);
-
-}
 void initOledDisplay(picoSSOLED myOled){
 //    IRQ: 8
 //    Clock count: 125124944
@@ -191,20 +117,15 @@ void updateOled(uint32_t irqCount, uint32_t clockCount, uint32_t pulseCount, pic
 
     myOled.write_string(0,0,0,(char *)"IRQ:           ", FONT_8x8, 0, 1);
     myOled.write_string(0,0,0,(char *)irqCountString.c_str(), FONT_8x8, 0, 1);
+
+    myOled.write_string(0,0,2,(char *)"            ", FONT_8x8, 0, 1);
     myOled.write_string(0,0,2,(char *)clockCountString.c_str(), FONT_8x8, 0, 1);
-    myOled.write_string(0,0,4,(char *)"          ", FONT_8x8, 0, 1);
+
+    myOled.write_string(0,0,4,(char *)"            ", FONT_8x8, 0, 1);
     myOled.write_string(0,0,4,(char *)pulseCountString.c_str(), FONT_8x8, 0, 1);
     myOled.write_string(0,0,6,(char *)"            ", FONT_8x8, 0, 1);
     myOled.write_string(0,0,6,(char *)frequencyString.c_str(), FONT_8x8, 0, 1);
 
-
-//    myOled.write_string(0,0,0,(char *)"IRQ: **********", FONT_8x8, 0, 1);
-//    myOled.write_string(0,0,1,(char *)"Clock Count:", FONT_6x8, 0, 1);
-//    myOled.write_string(0,0,2,(char *)"**********", FONT_8x8, 0, 1);
-//    myOled.write_string(0,0,3,(char *)"Input Count:", FONT_6x8, 0, 1);
-//    myOled.write_string(0,0,4,(char *)"**********", FONT_8x8, 0, 1);
-//
-//    myOled.write_string(0,0,6,(char *)"***.******", FONT_8x8, 0, 1);
 
 
 }
@@ -212,7 +133,6 @@ void updateOled(uint32_t irqCount, uint32_t clockCount, uint32_t pulseCount, pic
 void core1_interrupt_handler(){
     while (multicore_fifo_rvalid()){
         uint16_t raw = multicore_fifo_pop_blocking();
-
     }
     multicore_fifo_clear_irq();
 }
@@ -241,7 +161,7 @@ int main() {
 //    multicore_launch_core1(core1_entry);
 //    multicore_fifo_push_blocking(0);
     initOledDisplay(myOled);
-    updateOled(i, 1234567898, 42, myOled);
+    //updateOled(i, 1234567898, 42, myOled);
 //    demoLoop(myOled, rc);
 
 
@@ -259,14 +179,6 @@ int main() {
             i++;
             update_flag = false;
         }
-
-
     }
 
 }
-
-
-//IRQ: 8
-//Clock count: 125124944
-//Input count: 1001
-//Frequency: 1000.002136
