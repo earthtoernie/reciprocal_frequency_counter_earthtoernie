@@ -39,7 +39,7 @@ void isr()
     printf("IRQ: ");
 
     if(!update_flag){
-        pio_sm_put(sd_pio, 0, 125000000);
+        pio_sm_put(sd_pio, 0, 12500000);
         pio_sm_exec(sd_pio, 0, pio_encode_pull(false, false));
         //printf("irq: ");
 
@@ -148,6 +148,8 @@ void core1_entry(){
 //void count_handler(sm)
 int main() {
     // minicom -D /dev/ttyACM0 -b 115200
+    // python3 ./usr/lib/python3/dist-packages/serial/tools/miniterm.py - 115200
+    // ctrl ]
     // https://forums.raspberrypi.com/viewtopic.php?t=316677
     stdio_init_all();
     printf("hello world!\n");
@@ -171,6 +173,8 @@ int main() {
             uint32_t pulse_count = max_count - data[1];
             float frequency = pulse_count * (125000208.6 / clock_count);
             printf("%d\n", i);
+            printf("d_0: %u\n", data[0]);
+            printf("d_1: %u\n", data[1]);
             printf("Clock count: %u\n", clock_count);
             printf("Input count: %u\n", pulse_count);
             printf("Frequency: %f\n", frequency);
