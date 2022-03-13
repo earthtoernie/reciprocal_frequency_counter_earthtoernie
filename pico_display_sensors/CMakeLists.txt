@@ -12,8 +12,8 @@ target_link_libraries(display_sensors pico_stdlib hardware_spi hardware_clocks h
 pico_add_extra_outputs(display_sensors)
 
 # enable usb output, disable uart output
-pico_enable_stdio_usb(display_sensors 0)
-pico_enable_stdio_uart(display_sensors 1)
+pico_enable_stdio_usb(display_sensors 1)
+pico_enable_stdio_uart(display_sensors 0)
 
 # Create C header file with the name <pio program>.pio.h
 #pico_generate_pio_header(display ${CMAKE_CURRENT_LIST_DIR}/pico_pio_interrupts.pio)

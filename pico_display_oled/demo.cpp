@@ -23,11 +23,20 @@
 #define OLED_WIDTH 128
 #define OLED_HEIGHT 64
 
+#define GATE_err 0
+#define GATE_1s 1
+#define GATE_10ms 16
+#define GATE_20ms 17
+#define GATE_100ms 18
+#define GATE_500ms 19
+
 uint32_t max_count = 4294967295;// const((1 << 32) - 1), highest unsigned int
 
 
 PIO sd_pio = pio0;
 volatile bool update_flag = false;
+uint32_t countTo = 125000000; // 1M
+int set_pin = 0;
 uint32_t data [2] = { 0, 0 };
 
 //https://raspberrypi.github.io/pico-sdk-doxygen/group__hardware__irq.html
@@ -39,7 +48,7 @@ void isr()
     printf("IRQ: ");
 
     if(!update_flag){
-        pio_sm_put(sd_pio, 0, 12500000);
+        pio_sm_put(sd_pio, 0, countTo);
         pio_sm_exec(sd_pio, 0, pio_encode_pull(false, false));
         //printf("irq: ");
 
@@ -100,9 +109,15 @@ void initOledDisplay(picoSSOLED myOled){
     myOled.write_string(0,0,0,(char *)"IRQ: **********", FONT_8x8, 0, 1);
     myOled.write_string(0,0,1,(char *)"Clock Count:", FONT_6x8, 0, 1);
     myOled.write_string(0,0,2,(char *)"**********", FONT_8x8, 0, 1);
-    myOled.write_string(0,0,3,(char *)"Input Count:", FONT_6x8, 0, 1);
-    myOled.write_string(0,0,4,(char *)"**********", FONT_8x8, 0, 1);
+    if(set_pin == GATE_10ms) myOled.write_string(0,0,3,(char *)"Input Count: 10ms", FONT_6x8, 0, 1);
+    if(set_pin == GATE_20ms) myOled.write_string(0,0,3,(char *)"Input Count: 20ms", FONT_6x8, 0, 1);
+    if(set_pin == GATE_100ms) myOled.write_string(0,0,3,(char *)"Input Count: 100ms", FONT_6x8, 0, 1);
+    if(set_pin == GATE_500ms) myOled.write_string(0,0,3,(char *)"Input Count: 500ms", FONT_6x8, 0, 1);
+    if(set_pin == GATE_1s) myOled.write_string(0,0,3,(char *)"Input Count: 1s", FONT_6x8, 0, 1);
+    if(set_pin == GATE_err) myOled.write_string(0,0,3,(char *)"Input Count: err", FONT_6x8, 0, 1);
 
+    myOled.write_string(0,0,4,(char *)"**********", FONT_8x8, 0, 1);
+    myOled.write_string(0,0,5,(char *)"10m 20m 100m 500m 1 ", FONT_6x8, 1, 1);
     myOled.write_string(0,0,6,(char *)"***.******", FONT_8x8, 0, 1);
 }
 
@@ -151,14 +166,50 @@ int main() {
     // python3 ./usr/lib/python3/dist-packages/serial/tools/miniterm.py - 115200
     // ctrl ]
     // https://forums.raspberrypi.com/viewtopic.php?t=316677
+
+    gpio_pull_up(GATE_10ms);
+    gpio_pull_up(GATE_20ms);
+    gpio_pull_up(GATE_100ms);
+    gpio_pull_up(GATE_500ms);
+    gpio_init(GATE_10ms);
+    gpio_init(GATE_20ms);
+    gpio_init(GATE_100ms);
+    gpio_init(GATE_500ms);
+    gpio_set_dir(GATE_10ms, GPIO_IN);
+    gpio_set_dir(GATE_20ms, GPIO_IN);
+    gpio_set_dir(GATE_100ms, GPIO_IN);
+    gpio_set_dir(GATE_500ms, GPIO_IN);
+
+    gpio_pull_up(2);
+    gpio_set_dir(2, GPIO_OUT);
+    gpio_put(2, 1);
+
+    bool gate_10ms_set = !gpio_get(GATE_10ms);
+    bool gate_20ms_set = !gpio_get(GATE_20ms);
+    bool gate_100ms_set = !gpio_get(GATE_100ms);
+    bool gate_500ms_set = !gpio_get(GATE_500ms);
     stdio_init_all();
+
+    int total_set = 0;
+    if(gate_10ms_set) {set_pin = GATE_10ms; total_set++; countTo = 1250000;}
+    if(gate_20ms_set) {set_pin = GATE_20ms; total_set++; countTo = 2500000;}
+    if(gate_100ms_set) {set_pin = GATE_100ms; total_set++; countTo = 12500000;}
+    if(gate_500ms_set) {set_pin = GATE_500ms; total_set++; countTo = 62500000;}
+    if(total_set > 1) {set_pin = GATE_err;}
+    if(total_set == 0) {set_pin = GATE_1s;}
+
+
+
     printf("hello world!\n");
+//    printf("%s %s %s %s \n" , gate_10ms_set?"true":"false", gate_20ms_set?"true":"false", gate_100ms_set?"true":"false", gate_500ms_set?"true":"false");
+//    printf("set pin: %i \n", set_pin);
+
     int rc;
     picoSSOLED myOled(OLED_128x64, 0x3c, 0, 0, PICO_I2C, PICO_DEFAULT_I2C_SDA_PIN, PICO_DEFAULT_I2C_SCL_PIN, I2C_SPEED);
     rc = myOled.init();
     // pio stuff
     init_sm(125000000);
-    int i = 0;
+    uint32_t i = 0;
 
 //    multicore_launch_core1(core1_entry);
 //    multicore_fifo_push_blocking(0);
@@ -172,9 +223,9 @@ int main() {
             uint32_t clock_count = 2 * (max_count - data[0] + 1);
             uint32_t pulse_count = max_count - data[1];
             float frequency = pulse_count * (125000208.6 / clock_count);
-            printf("%d\n", i);
-            printf("d_0: %u\n", data[0]);
-            printf("d_1: %u\n", data[1]);
+            printf("%u %u %u\n", i, data[0], data[1]);
+//            printf("d_0: %u\n", data[0]);
+//            printf("d_1: %u\n", data[1]);
             printf("Clock count: %u\n", clock_count);
             printf("Input count: %u\n", pulse_count);
             printf("Frequency: %f\n", frequency);
