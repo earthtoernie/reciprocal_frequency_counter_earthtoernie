@@ -166,6 +166,8 @@ int main() {
     // python3 ./usr/lib/python3/dist-packages/serial/tools/miniterm.py - 115200
     // ctrl ]
     // https://forums.raspberrypi.com/viewtopic.php?t=316677
+    // python3 -m serial.tools.list_ports -v
+    // https://forums.raspberrypi.com/viewtopic.php?t=306876
 
     gpio_pull_up(GATE_10ms);
     gpio_pull_up(GATE_20ms);
