@@ -1,0 +1,79 @@
+install:
+
+openocd
+(sdk deps)
+cmake gcc-arm-none-eabi gcc g++
+(uart deps)
+minicom
+
+in pico folder:
+
+main SDK:
+git clone https://github.com/raspberrypi/pico-sdk.git
+cd pico-sdk
+git submodule update --init
+cd ..
+
+add to bashrc:
+export PICO_SDK_PATH=/home/ernie/pico/pico-sdk
+export PICO_EXAMPLES_PATH=/home/ernie/pico/pico-examples
+export PICO_EXTRAS_PATH=/home/ernie/pico/pico-extras
+export PICO_PLAYGROUND_PATH=/home/ernie/pico/pico-playground
+
+git clone https://github.com/raspberrypi/pico-examples.git
+git clone https://github.com/raspberrypi/pico-extras.git
+git clone https://github.com/raspberrypi/pico-playground.git
+
+inside of pico examples:
+mkdir build
+cd build
+cmake ../ -DCMAKE_BUILD_TYPE=Debug
+
+build some examples
+cd blink
+make
+cd ..
+
+cd hello_world
+make
+cd ..
+
+MUST INSTALL... sudo apt install pkg-config
+needed for picotool: libusb-1.0-0-dev
+apt install 
+build pictotool::
+git clone https://github.com/raspberrypi/picotool.git
+cd picotool
+mkdir build
+cd build
+cmake ../
+make
+sudo cp picotool /usr/local/bin/
+
+
+=============
+see https://datasheets.raspberrypi.com/pico/getting-started-with-pico.pdf
+
+
+code --install-extension marus25.cortex-debug
+code --install-extension ms-vscode.cmake-tools
+code --install-extension ms-vscode.cpptools
+
+
+
+now onto fixing:
+statics/globals/functions may not be properly classified:
+https://forums.raspberrypi.com/viewtopic.php?t=333146
+to actually get to run in the debugger in vscode...
+sudo apt install gdb-multiarch 
+sudo apt update
+sudo apt install binutils-multiarch
+cd /usr/bin
+ln -s /usr/bin/objdump objdump-multiarch
+ln -s /usr/bin/nm nm-multiarch
+
+make sure to install Ninja!
+sudo apt install ninja-build
+
+
+https://github.com/microsoft/vscode-cmake-tools/blob/main/docs/debug-launch.md
