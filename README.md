@@ -18,7 +18,7 @@ This work is licensed under a
  Display stuff, and PCB is my own.
 
 ## Main project
-[The counter](reciprocal_frequency_counter_oled/main.cpp)
+[The counter](pico_display_oled/main.cpp)
 
 
 

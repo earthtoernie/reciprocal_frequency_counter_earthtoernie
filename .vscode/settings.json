@@ -26,6 +26,7 @@
     "files.associations": {
         "stdio.h": "c",
         "pico.h": "c",
-        "stdlib.h": "c"
+        "stdlib.h": "c",
+        "cstdio": "cpp"
     }
 }

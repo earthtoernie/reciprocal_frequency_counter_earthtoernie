@@ -1,6 +1,6 @@
 add_executable(
         display_oled
-        demo.cpp
+        main.cpp
         image_data.cpp
 )
 
