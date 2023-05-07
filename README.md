@@ -50,7 +50,7 @@ This is for compatibility with GPIO on the pico board.
 
 
 ## Brag
-Was able to conveniently run from the 5V usb powe source, with no additional boos converter.
+Was able to conveniently run from the 5V usb power source, with no additional boost converter.
 
 ## Awesome script to install sdk on Ubuntu 23.04
 [install script](NOTES/install_raspberry_pico.sh) 
