@@ -53,7 +53,7 @@ This is for compatibility with GPIO on the pico board.
 Was able to conveniently run from the 5V usb powe source, with no additional boos converter.
 
 ## Awesome script to install sdk on Ubuntu 23.04
-[install script](notes/install_raspberry_pico.sh) 
+[install script](NOTES/install_raspberry_pico.sh) 
 
 # Notes
 Some other junk is included in this project (interfacing with other sensors), feel free to ignore. Also other "Scratch" projects included
