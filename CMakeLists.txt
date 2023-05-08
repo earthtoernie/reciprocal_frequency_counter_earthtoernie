@@ -47,8 +47,6 @@ add_subdirectory(libraries)
 # END adds in the pimoroni stuff
 
 include(example_auto_set_url.cmake)
-# Add blink example
-add_subdirectory(blink)
 
 # Add hello world example
 add_subdirectory(hello_world)
