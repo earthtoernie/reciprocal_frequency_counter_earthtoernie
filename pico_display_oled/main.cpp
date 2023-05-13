@@ -13,6 +13,14 @@
 #define GATE_PIN 4
 #define PULSE_FIN_PIN 3
 
+// Button pins
+#define BUTTON_WINDOW_PIN 16
+#define BUTTON_SOURCE_PIN 17
+
+// output pins
+#define LED_PIN 25
+#define EXT50_EN_PIN 12
+
 // i2c stuff. oled stuff
 #define PICO_DEFAULT_I2C 1
 #define PICO_DEFAULT_I2C_SDA_PIN 26
@@ -29,6 +37,25 @@
 #define GATE_20ms 17
 #define GATE_100ms 18
 #define GATE_500ms 19
+
+// debounce control
+unsigned long time = to_ms_since_boot(get_absolute_time());
+const int delayTime = 300; // Delay for every push button may vary
+bool button_window_state;
+bool button_source_state;
+
+void inter_test(uint gpio, uint32_t events) {
+    if ((to_ms_since_boot(get_absolute_time())-time)>delayTime) {
+        // Recommend to not to change the position of this line
+        time = to_ms_since_boot(get_absolute_time());
+        
+        // Interrupt function lines
+        button_source_state = !button_source_state;
+        gpio_put(LED_PIN, button_source_state);
+        gpio_put(EXT50_EN_PIN, button_source_state);
+    }
+}
+
 
 uint32_t max_count = 4294967295;// const((1 << 32) - 1), highest unsigned int
 
@@ -107,7 +134,7 @@ void initOledDisplay(picoSSOLED myOled){
 //    Frequency: 1000.002136
     myOled.fill(0,1);
     myOled.write_string(0,0,0,(char *)"IRQ: **********", FONT_8x8, 0, 1);
-    myOled.write_string(0,0,1,(char *)"Clock Count:", FONT_6x8, 0, 1);
+    myOled.write_string(0,0,1,(char *)"50 Ohm, Clock Count:", FONT_6x8, 0, 1);
     myOled.write_string(0,0,2,(char *)"**********", FONT_8x8, 0, 1);
     if(set_pin == GATE_10ms) myOled.write_string(0,0,3,(char *)"Input Count: 10ms", FONT_6x8, 0, 1);
     if(set_pin == GATE_20ms) myOled.write_string(0,0,3,(char *)"Input Count: 20ms", FONT_6x8, 0, 1);
@@ -191,6 +218,24 @@ int main() {
     bool gate_100ms_set = !gpio_get(GATE_100ms);
     bool gate_500ms_set = !gpio_get(GATE_500ms);
     stdio_init_all();
+
+    // start init of buttons
+    // just to know when the board is on ... not related to debounce
+    gpio_init(LED_PIN);
+    gpio_set_dir(LED_PIN, GPIO_OUT);
+    gpio_init(EXT50_EN_PIN);
+    gpio_set_dir(EXT50_EN_PIN, GPIO_OUT);
+    button_window_state = true;
+    gpio_put(LED_PIN, button_window_state);
+    gpio_put(EXT50_EN_PIN, button_window_state);
+
+    // interrupt
+    gpio_init(BUTTON_WINDOW_PIN);
+    gpio_pull_up(BUTTON_WINDOW_PIN);
+
+    gpio_set_irq_enabled_with_callback(BUTTON_WINDOW_PIN, GPIO_IRQ_EDGE_FALL , true, &inter_test);
+
+    // end init of buttons
 
     int total_set = 0;
     if(gate_10ms_set) {set_pin = GATE_10ms; total_set++; countTo = 1250000;}
