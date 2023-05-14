@@ -20,8 +20,8 @@ target_link_libraries(display_oled pico_stdlib hardware_i2c pico_multicore hardw
 pico_add_extra_outputs(display_oled)
 
 # enable usb output, disable uart output
-pico_enable_stdio_usb(display_oled 1)
-pico_enable_stdio_uart(display_oled 0)
+pico_enable_stdio_usb(display_oled 0)
+pico_enable_stdio_uart(display_oled 1)
 
 # Create C header file with the name <pio program>.pio.h
 pico_generate_pio_header(display_oled ${CMAKE_CURRENT_LIST_DIR}/count.pio)
