@@ -1,5 +1,4 @@
 #include <cstring>
-#include <hardware/regs/intctrl.h>
 #include <hardware/irq.h>
 #include <cstdio>
 #include <string>
@@ -44,6 +43,8 @@ const int delayTime = 300; // Delay for every push button may vary
 bool button_window_state;
 bool button_source_state;
 
+extern picoSSOLED myOled(OLED_128x64, 0x3c, 0, 0, PICO_I2C, PICO_DEFAULT_I2C_SDA_PIN, PICO_DEFAULT_I2C_SCL_PIN, I2C_SPEED);
+
 void inter_test(uint gpio, uint32_t events) {
     if ((to_ms_since_boot(get_absolute_time())-time)>delayTime) {
         // Recommend to not to change the position of this line
@@ -53,6 +54,12 @@ void inter_test(uint gpio, uint32_t events) {
         button_source_state = !button_source_state;
         gpio_put(LED_PIN, button_source_state);
         gpio_put(EXT50_EN_PIN, button_source_state);
+        if (button_source_state == true) {
+            myOled.write_string(0,0,1,(char *)"50 Ohm, Clock Count:", FONT_6x8, 0, 1);
+        }
+         else {
+            myOled.write_string(0,0,1,(char *)"Sensor, Clock Count:", FONT_6x8, 0, 1);
+        }
     }
 }
 
@@ -65,6 +72,8 @@ volatile bool update_flag = false;
 uint32_t countTo = 125000000; // 1M
 int set_pin = 0;
 uint32_t data [2] = { 0, 0 };
+
+
 
 //https://raspberrypi.github.io/pico-sdk-doxygen/group__hardware__irq.html
 void isr()
@@ -123,7 +132,6 @@ void init_sm(uint32_t freq) {
     pio_sm_set_enabled(sd_pio, 1, true);
     pio_sm_set_enabled(sd_pio, 2, true);
     pio_sm_set_enabled(sd_pio, 0, true);
-
 
 }
 
@@ -252,7 +260,7 @@ int main() {
 //    printf("set pin: %i \n", set_pin);
 
     int rc;
-    picoSSOLED myOled(OLED_128x64, 0x3c, 0, 0, PICO_I2C, PICO_DEFAULT_I2C_SDA_PIN, PICO_DEFAULT_I2C_SCL_PIN, I2C_SPEED);
+    //picoSSOLED myOled(OLED_128x64, 0x3c, 0, 0, PICO_I2C, PICO_DEFAULT_I2C_SDA_PIN, PICO_DEFAULT_I2C_SCL_PIN, I2C_SPEED);
     rc = myOled.init();
     // pio stuff
     init_sm(125000000);
