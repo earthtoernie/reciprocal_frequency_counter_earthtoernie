@@ -272,6 +272,7 @@ int main() {
     // todo, "gpio_set_irq_enabled_with_callback" is broken
     // see https://forums.raspberrypi.com/viewtopic.php?t=339227&sid=64b002dadef60993ff6d878310481399
     // see https://github.com/raspberrypi/pico-sdk/releases
+    // https://www.embedded.com/interrupts-in-c/ (NVIC)
     gpio_set_irq_enabled_with_callback(BUTTON_SOURCE_PIN_17, GPIO_IRQ_EDGE_FALL , true, &source_state_changed_callback);
     gpio_set_irq_enabled_with_callback(BUTTON_WINDOW_PIN_16, GPIO_IRQ_EDGE_FALL , true, &window_state_changed_callback);
 
