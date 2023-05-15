@@ -76,14 +76,34 @@ void source_state_changed_callback(uint gpio, uint32_t events)
 
 void window_state_changed_callback(uint gpio, uint32_t events)
 {
-    if ((to_ms_since_boot(get_absolute_time()) - time_window_state_debounce) > delayTime)
-    {
-        // Recommend to not to change the position of this line
-        time_window_state_debounce = to_ms_since_boot(get_absolute_time());
-        printf("********** WINDOW button pressed!\n");
+
+    if (gpio == BUTTON_WINDOW_PIN_16){
+        gpio_set_irq_enabled(BUTTON_SOURCE_PIN_17, GPIO_IRQ_EDGE_FALL, false);
+        gpio_acknowledge_irq(BUTTON_SOURCE_PIN_17, GPIO_IRQ_EDGE_FALL);
+        if ((to_ms_since_boot(get_absolute_time()) - time_window_state_debounce) > delayTime){
+            gpio_acknowledge_irq(BUTTON_WINDOW_PIN_16, GPIO_IRQ_EDGE_FALL);
+            gpio_set_irq_enabled(BUTTON_WINDOW_PIN_16, GPIO_IRQ_EDGE_FALL, false);
+            gpio_set_irq_enabled(BUTTON_SOURCE_PIN_17, GPIO_IRQ_EDGE_FALL, false);
+            // Recommend to not to change the position of this line
+            time_window_state_debounce = to_ms_since_boot(get_absolute_time());
+            printf("********** WINDOW button pressed! %u\n", gpio);
+
+            // Interrupt function lines
+            // TODO
+        }
+    } else if (gpio == BUTTON_SOURCE_PIN_17){
+        gpio_acknowledge_irq(BUTTON_WINDOW_PIN_16, GPIO_IRQ_EDGE_FALL);
+        if ((to_ms_since_boot(get_absolute_time()) - time_source_state_debounce) > delayTime){
+            gpio_acknowledge_irq(BUTTON_SOURCE_PIN_17, GPIO_IRQ_EDGE_FALL);
+            gpio_set_irq_enabled(BUTTON_WINDOW_PIN_16, GPIO_IRQ_EDGE_FALL, false);
+            gpio_set_irq_enabled(BUTTON_SOURCE_PIN_17, GPIO_IRQ_EDGE_FALL, false);
+            // Recommend to not to change the position of this line
+            time_source_state_debounce = to_ms_since_boot(get_absolute_time());
+            printf("********** SOURCE button pressed! %u\n", gpio);
 
         // Interrupt function lines
         // TODO
+        }
     }
 }
 
@@ -273,7 +293,7 @@ int main() {
     // see https://forums.raspberrypi.com/viewtopic.php?t=339227&sid=64b002dadef60993ff6d878310481399
     // see https://github.com/raspberrypi/pico-sdk/releases
     // https://www.embedded.com/interrupts-in-c/ (NVIC)
-    gpio_set_irq_enabled_with_callback(BUTTON_SOURCE_PIN_17, GPIO_IRQ_EDGE_FALL , true, &source_state_changed_callback);
+    gpio_set_irq_enabled_with_callback(BUTTON_SOURCE_PIN_17, GPIO_IRQ_EDGE_FALL , true, &window_state_changed_callback);
     gpio_set_irq_enabled_with_callback(BUTTON_WINDOW_PIN_16, GPIO_IRQ_EDGE_FALL , true, &window_state_changed_callback);
 
 
