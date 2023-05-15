@@ -51,7 +51,31 @@ const int delayTime = 300; // Delay for every push button may vary
 int button_window_state; // 1 represents the smallest window
 bool button_source_state;
 
-void source_state_changed_callback(uint gpio, uint32_t events)
+// void source_state_changed_callback(uint gpio, uint32_t events)
+// {
+//     if ((to_ms_since_boot(get_absolute_time()) - time_source_state_debounce) > delayTime)
+//     {
+//         // Recommend to not to change the position of this line
+//         time_source_state_debounce = to_ms_since_boot(get_absolute_time());
+//         printf("********** SOURCE button pressed!\n");
+
+//         // Interrupt function lines
+//         button_source_state = !button_source_state;
+//         gpio_put(LED_PIN, button_source_state);
+//         gpio_put(EXT50_EN_PIN, button_source_state);
+//         if (button_source_state == true)
+//         {
+//             myOled.write_string(0, 0, 1, (char *)"50 Ohm, Clock Count:", FONT_6x8, 0, 1);
+//         }
+//         else
+//         {
+//             myOled.write_string(0, 0, 1, (char *)"Sensor, Clock Count:", FONT_6x8, 0, 1);
+//         }
+//     }
+// }
+
+
+void source_state_changed_callback()
 {
     if ((to_ms_since_boot(get_absolute_time()) - time_source_state_debounce) > delayTime)
     {
@@ -74,7 +98,20 @@ void source_state_changed_callback(uint gpio, uint32_t events)
     }
 }
 
-void window_state_changed_callback(uint gpio, uint32_t events)
+
+// void window_state_changed_callback(uint gpio, uint32_t events)
+// {
+//     if ((to_ms_since_boot(get_absolute_time()) - time_window_state_debounce) > delayTime)
+//     {
+//         // Recommend to not to change the position of this line
+//         time_window_state_debounce = to_ms_since_boot(get_absolute_time());
+//         printf("********** WINDOW button pressed!\n");
+
+//         // Interrupt function lines
+//         // TODO
+//     }
+// }
+void window_state_changed_callback()
 {
     if ((to_ms_since_boot(get_absolute_time()) - time_window_state_debounce) > delayTime)
     {
@@ -214,6 +251,34 @@ void core1_entry(){
 
 }
 
+
+void gpio_callback_foo(void) {
+    //printf("********** foo button pressed!\n");
+    uint32_t event_mask = gpio_get_irq_event_mask(BUTTON_SOURCE_PIN_17);
+    gpio_acknowledge_irq(BUTTON_SOURCE_PIN_17, GPIO_IRQ_EDGE_FALL);
+    gpio_acknowledge_irq(BUTTON_WINDOW_PIN_16, GPIO_IRQ_EDGE_FALL);
+    if (event_mask == GPIO_IRQ_EDGE_FALL) {
+        gpio_acknowledge_irq(BUTTON_SOURCE_PIN_17, event_mask);
+        printf("********** FOO button pressed!\n");
+    }
+    gpio_acknowledge_irq(BUTTON_SOURCE_PIN_17, GPIO_IRQ_EDGE_FALL);
+    gpio_acknowledge_irq(BUTTON_WINDOW_PIN_16, GPIO_IRQ_EDGE_FALL);
+
+
+}
+
+void gpio_callback_bar(void) {
+    //printf("********** bar button pressed!\n");
+    uint32_t event_mask = gpio_get_irq_event_mask(BUTTON_WINDOW_PIN_16);
+    gpio_acknowledge_irq(BUTTON_SOURCE_PIN_17, GPIO_IRQ_EDGE_FALL);
+    gpio_acknowledge_irq(BUTTON_WINDOW_PIN_16, GPIO_IRQ_EDGE_FALL);
+    if (event_mask == GPIO_IRQ_EDGE_FALL) {
+        gpio_acknowledge_irq(BUTTON_SOURCE_PIN_17, event_mask);
+        printf("********** BAR button pressed!\n");
+    }
+    
+}
+
 //void count_handler(sm)
 int main() {
     // minicom -D /dev/ttyACM0 -b 115200
@@ -273,8 +338,31 @@ int main() {
     // see https://forums.raspberrypi.com/viewtopic.php?t=339227&sid=64b002dadef60993ff6d878310481399
     // see https://github.com/raspberrypi/pico-sdk/releases
     // https://www.embedded.com/interrupts-in-c/ (NVIC)
-    gpio_set_irq_enabled_with_callback(BUTTON_SOURCE_PIN_17, GPIO_IRQ_EDGE_FALL , true, &source_state_changed_callback);
-    gpio_set_irq_enabled_with_callback(BUTTON_WINDOW_PIN_16, GPIO_IRQ_EDGE_FALL , true, &window_state_changed_callback);
+    // https://github.com/raspberrypi/pico-sdk/blob/1.5.0/src/rp2_common/hardware_gpio/include/hardware/gpio.h see line 360
+    //gpio_add_raw_irq_handler_with_order_priority(BUTTON_SOURCE_PIN_17, gpio_callback_foo);
+    //gpio_add_raw_irq_handler_with_order_priority(BUTTON_WINDOW_PIN_16, gpio_callback_bar);
+
+    //gpio_set_irq_callback()
+    gpio_add_raw_irq_handler(BUTTON_SOURCE_PIN_17, gpio_callback_foo);
+    gpio_set_irq_enabled(BUTTON_SOURCE_PIN_17, GPIO_IRQ_EDGE_FALL, true);
+
+
+    gpio_add_raw_irq_handler(BUTTON_WINDOW_PIN_16, gpio_callback_bar);
+    gpio_set_irq_enabled(BUTTON_WINDOW_PIN_16, GPIO_IRQ_EDGE_FALL, true);
+
+
+    irq_set_enabled(IO_IRQ_BANK0, true);
+    // gpio_set_irq_enabled(BUTTON_WINDOW_PIN_16, GPIO_IRQ_EDGE_FALL, true);
+    // gpio_add_raw_irq_handler(BUTTON_WINDOW_PIN_16, imu_irq_foo);
+    //gpio_set_irq_enabled(BUTTON_WINDOW_PIN_16, GPIO_IRQ_LEVEL_LOW, true);
+
+    //irq_set_enabled(IO_IRQ_BANK0, true);
+    //https://github.com/Wiz-IO/framework-wizio-pico/blob/60881de96032617715b5576caaca34d70f2e94e9/SDK/pico/pico_cyw43_arch/cyw43_arch_poll.c#L63
+
+
+    //gpio_set_irq_enabled_with_callback(BUTTON_SOURCE_PIN_17, true, GPIO_IRQ_EDGE_FALL, source_state_changed_callback);
+    //gpio_set_irq_enabled_with_callback(BUTTON_SOURCE_PIN_17, GPIO_IRQ_EDGE_FALL , true, source_state_changed_callback);
+    //gpio_set_irq_enabled_with_callback(BUTTON_WINDOW_PIN_16, GPIO_IRQ_EDGE_FALL , true,&window_state_changed_callback);
 
 
     // end init of buttons
