@@ -7,3 +7,5 @@ build
 kicad_pico_counter_new/allegro_pico_counter_new-backups/
 kicad_pico_counter_new/allegro_pico_counter_new.kicad_prl
 kicad_pico_counter_new/fp-info-cache
+.vscode/.cortex-debug.peripherals.state.json
+.vscode/.cortex-debug.registers.state.json

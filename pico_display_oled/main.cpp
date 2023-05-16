@@ -51,40 +51,24 @@ const int delayTime = 300; // Delay for every push button may vary
 int button_window_state; // 1 represents the smallest window
 bool button_source_state;
 
-void source_state_changed_callback(uint gpio, uint32_t events)
+void update_source_state(bool is_external)
 {
-    if ((to_ms_since_boot(get_absolute_time()) - time_source_state_debounce) > delayTime)
+    if (is_external == true)
     {
-        // Recommend to not to change the position of this line
-        time_source_state_debounce = to_ms_since_boot(get_absolute_time());
-        printf("********** SOURCE button pressed!\n");
-
-        // Interrupt function lines
-        button_source_state = !button_source_state;
-        gpio_put(LED_PIN, button_source_state);
-        gpio_put(EXT50_EN_PIN, button_source_state);
-        if (button_source_state == true)
-        {
-            myOled.write_string(0, 0, 1, (char *)"50 Ohm, Clock Count:", FONT_6x8, 0, 1);
-        }
-        else
-        {
-            myOled.write_string(0, 0, 1, (char *)"Sensor, Clock Count:", FONT_6x8, 0, 1);
-        }
+        myOled.write_string(0, 0, 1, (char *)"50 Ohm, Clock Count:", FONT_6x8, 0, 1);
     }
+    else
+    {
+        myOled.write_string(0, 0, 1, (char *)"Sensor, Clock Count:", FONT_6x8, 0, 1);
+    }
+    gpio_put(EXT50_EN_PIN, is_external);
+    button_source_state = is_external; // update global state
 }
 
-void window_state_changed_callback(uint gpio, uint32_t events)
+void source_state_changed_callback(uint gpio, uint32_t events)
 {
-
     if (gpio == BUTTON_WINDOW_PIN_16){
-        gpio_set_irq_enabled(BUTTON_SOURCE_PIN_17, GPIO_IRQ_EDGE_FALL, false);
-        gpio_acknowledge_irq(BUTTON_SOURCE_PIN_17, GPIO_IRQ_EDGE_FALL);
         if ((to_ms_since_boot(get_absolute_time()) - time_window_state_debounce) > delayTime){
-            gpio_acknowledge_irq(BUTTON_WINDOW_PIN_16, GPIO_IRQ_EDGE_FALL);
-            gpio_set_irq_enabled(BUTTON_WINDOW_PIN_16, GPIO_IRQ_EDGE_FALL, false);
-            gpio_set_irq_enabled(BUTTON_SOURCE_PIN_17, GPIO_IRQ_EDGE_FALL, false);
-            // Recommend to not to change the position of this line
             time_window_state_debounce = to_ms_since_boot(get_absolute_time());
             printf("********** WINDOW button pressed! %u\n", gpio);
 
@@ -92,17 +76,10 @@ void window_state_changed_callback(uint gpio, uint32_t events)
             // TODO
         }
     } else if (gpio == BUTTON_SOURCE_PIN_17){
-        gpio_acknowledge_irq(BUTTON_WINDOW_PIN_16, GPIO_IRQ_EDGE_FALL);
         if ((to_ms_since_boot(get_absolute_time()) - time_source_state_debounce) > delayTime){
-            gpio_acknowledge_irq(BUTTON_SOURCE_PIN_17, GPIO_IRQ_EDGE_FALL);
-            gpio_set_irq_enabled(BUTTON_WINDOW_PIN_16, GPIO_IRQ_EDGE_FALL, false);
-            gpio_set_irq_enabled(BUTTON_SOURCE_PIN_17, GPIO_IRQ_EDGE_FALL, false);
-            // Recommend to not to change the position of this line
             time_source_state_debounce = to_ms_since_boot(get_absolute_time());
             printf("********** SOURCE button pressed! %u\n", gpio);
-
-        // Interrupt function lines
-        // TODO
+            update_source_state(!button_source_state);
         }
     }
 }
@@ -293,8 +270,15 @@ int main() {
     // see https://forums.raspberrypi.com/viewtopic.php?t=339227&sid=64b002dadef60993ff6d878310481399
     // see https://github.com/raspberrypi/pico-sdk/releases
     // https://www.embedded.com/interrupts-in-c/ (NVIC)
-    gpio_set_irq_enabled_with_callback(BUTTON_SOURCE_PIN_17, GPIO_IRQ_EDGE_FALL , true, &window_state_changed_callback);
-    gpio_set_irq_enabled_with_callback(BUTTON_WINDOW_PIN_16, GPIO_IRQ_EDGE_FALL , true, &window_state_changed_callback);
+    gpio_set_irq_callback( &source_state_changed_callback);
+    gpio_set_irq_enabled(BUTTON_SOURCE_PIN_17, GPIO_IRQ_EDGE_FALL, true);
+    gpio_set_irq_enabled(BUTTON_WINDOW_PIN_16, GPIO_IRQ_EDGE_FALL, true);
+    irq_set_enabled(IO_IRQ_BANK0, true);
+    // really good link below
+    // https://github.com/mattwach/battery_drainer/blob/f88038b2f77225b453396fcbacbfb2b05bb002b9/src/lib/debounce/debounce.h#L85
+
+
+    //gpio_set_irq_callback(BUTTON_WINDOW_PIN_16, GPIO_IRQ_EDGE_FALL , true, &window_state_changed_callback);
 
 
     // end init of buttons
