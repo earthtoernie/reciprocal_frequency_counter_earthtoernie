@@ -34,9 +34,9 @@
         "other_text_thickness": 0.15,
         "other_text_upright": false,
         "pads": {
-          "drill": 0.0,
-          "height": 0.6,
-          "width": 1.325
+          "drill": 1.6,
+          "height": 2.2,
+          "width": 2.2
         },
         "silk_line_width": 0.15,
         "silk_text_italic": false,
@@ -415,7 +415,7 @@
     "pinned_symbol_libs": []
   },
   "meta": {
-    "filename": "allegro_pico_counter_new.kicad_pro",
+    "filename": "allegro_pico_counter_alt.kicad_pro",
     "version": 1
   },
   "net_settings": {

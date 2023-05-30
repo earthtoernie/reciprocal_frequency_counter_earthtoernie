@@ -1,0 +1,44 @@
+notes about parts
+
+*for EEPROM:
+Most "Microchip" parts set lower address bits to "don't care's" which is not desirable
+need a  SOT-23-5 part where the address pins are set internally to "0" so use:
+
+24AA64/24FC64/24LC64 (24AA64T-E/OT seems to be in stock frequently) or
+24AA64F/24LC64F/24FC64F
+
+only difference is write protect scheme, but write protect is not used anyway (tied to ground)
+
+alternatively "SparkFun Qwiic EEPROM Breakout - 512Kbit" can be used, or no EEPROM chip (state not saved)
+
+*for buffer / level converter:
+Nexperia 74HC2G34GV,125 used because of small board size
+TI CD74HC4050M96 also tested, but changed due to large board size
+
+*for current sense / comparator, 
+INA203AIDR, stocked at Mouser, but not Digikey
+INA203AID also works (same thing) but seems to be even less stocked
+
+
+molex connectors, board:
+Molex 0022122024, CONN HEADER R/A 2POS 2.54MM, WM2711-ND
+
+
+smb connector:
+Molex 0733960320, SMB 50 OHM JACK R/A PCB, 900-0733960320-ND
+
+JST connectors:
+
+connectors for sensor:
+Molex 5037630291 WM10654CT-ND
+Molex 0151310206 WM16704-ND
+
+tact switch:
+C&K PTS636 SL50 SMTR LFS, CKN12313-1-ND
+
+(use different reset switch)
+https://www.digikey.com/en/products/detail/c-k/RS-282G05A3-SM-RT/2747190
+
+IC switch:
+TI TS5A63157DBVR, IC SWITCH SPDT X 1 10OHM SOT23-6, 296-21194-1-ND
+https://www.digikey.com/en/products/detail/texas-instruments/TS5A63157DBVR/1216800

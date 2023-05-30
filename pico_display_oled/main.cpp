@@ -18,7 +18,8 @@
 
 // output pins
 #define LED_PIN 25
-#define EXT50_EN_PIN 12
+// #define EXT50_EN_PIN 12
+#define EXT50_EN_PIN 21
 
 // i2c stuff. oled stuff
 #define PICO_DEFAULT_I2C 1
