@@ -54,7 +54,7 @@ else
   export PICO_PLAYGROUND_PATH=/home/$LOCAL_USERNAME/pico/pico-playground
 fi
 
-
+sudo apt install git -y
 
 # clone all repos
 git clone https://github.com/raspberrypi/pico-sdk.git
@@ -65,6 +65,12 @@ git clone https://github.com/raspberrypi/pico-examples.git
 git clone https://github.com/raspberrypi/pico-extras.git
 git clone https://github.com/raspberrypi/pico-playground.git
 git clone https://github.com/raspberrypi/picotool.git
+
+sudo chown -R $LOCAL_USERNAME:$LOCAL_USERNAME pico-examples
+sudo chown -R $LOCAL_USERNAME:$LOCAL_USERNAME pico-extras
+sudo chown -R $LOCAL_USERNAME:$LOCAL_USERNAME pico-playground
+sudo chown -R $LOCAL_USERNAME:$LOCAL_USERNAME picotool
+sudo chown -R $LOCAL_USERNAME:$LOCAL_USERNAME pico-sdk
 
 # build picotool
 sudo apt install cmake -y
@@ -96,8 +102,4 @@ sudo apt install openocd -y
 
 sudo apt install gdb-multiarch -y
 
-# sudo apt install binutils-multiarch (not needed?)
-
-# todo install vscode serial monitor
-pwd
-
+# sudo apt install binutils-mu
