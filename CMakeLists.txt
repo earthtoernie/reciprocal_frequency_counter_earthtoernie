@@ -63,4 +63,5 @@ add_subdirectory(pico_display)
 add_subdirectory(pico_display_oled)
 add_subdirectory(pico_pio_interrupts)
 add_subdirectory(pico_display_sensors)
+add_subdirectory(squaregen)
 add_subdirectory(sht40) # custom
